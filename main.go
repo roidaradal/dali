@@ -15,12 +15,21 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to get dali node:", err)
 	}
-	fmt.Println("Name:", node.Name)
-	fmt.Println("Addr:", node.Addr)
+	fmt.Println(node)
 
 	command, options := getCommandArgs()
-	fmt.Println("Command:", command)
-	fmt.Println("Options:", options)
+	switch command {
+	case "set":
+		err = node.Config.Update(options)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		fmt.Println("Updated:")
+		fmt.Println(node)
+	default:
+		fmt.Println("Usage: dali <command> (option=value...)")
+	}
 }
 
 func getCommandArgs() (string, dict.StringMap) {

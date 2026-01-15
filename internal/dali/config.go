@@ -1,16 +1,19 @@
 package dali
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-
+	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/io"
+	"github.com/roidaradal/fn/number"
 )
 
+// Full path: ~HOME/.dali
 const cfgPath string = ".dali"
 
+// Default timeout: 5 seconds
+const defaultTimeout int = 5
+
 type Config struct {
+	Path    string `json:"-"`
 	Name    string
 	Timeout int
 	Logs    []Event
@@ -26,51 +29,22 @@ func (e Event) Tuple() (eventType, filePath, senderName, senderAddr, receiverNam
 	return eventType, filePath, senderName, senderAddr, receiverName, receiverAddr
 }
 
-type Node struct {
-	Name string
-	Addr string
+func newConfig(name string) *Config {
+	return &Config{
+		Name:    name,
+		Timeout: defaultTimeout,
+		Logs:    []Event{},
+	}
 }
 
-// Load user node
-func LoadNode() (*Node, error) {
-	// Get home directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("cannot load home dir: %w", err)
-	}
-
-	// Initialize dali config file, if it does not exist
-	path := filepath.Join(homeDir, cfgPath)
-	if !io.PathExists(path) {
-		hostName, err := os.Hostname()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get hostname: %w", err)
-		}
-		cfg := &Config{
-			Name:    hostName,
-			Timeout: 5, // default: 5 seconds
-			Logs:    []Event{},
-		}
-		err = io.SaveIndentedJSON(cfg, path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize dali config: %w", err)
+func (c *Config) Update(options dict.StringMap) error {
+	for k, v := range options {
+		switch k {
+		case "name":
+			c.Name = v
+		case "timeout":
+			c.Timeout = max(defaultTimeout, number.ParseInt(v))
 		}
 	}
-
-	// Load dali config file
-	cfg, err := io.ReadJSON[Config](path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load dali config: %w", err)
-	}
-
-	addr, err := getLocalIPv4Address()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get local IP addr: %w", err)
-	}
-
-	node := &Node{
-		Name: cfg.Name,
-		Addr: addr,
-	}
-	return node, nil
+	return io.SaveIndentedJSON(c, c.Path)
 }
