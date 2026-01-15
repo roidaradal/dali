@@ -11,8 +11,9 @@ import (
 const cfgPath string = ".dali"
 
 type Config struct {
-	Name string
-	Logs []Event
+	Name    string
+	Timeout int
+	Logs    []Event
 }
 
 // Type, FilePath, SenderName, SenderAddr, ReceiverName, ReceiverAddr
@@ -46,8 +47,9 @@ func LoadNode() (*Node, error) {
 			return nil, fmt.Errorf("failed to get hostname: %w", err)
 		}
 		cfg := &Config{
-			Name: hostName,
-			Logs: []Event{},
+			Name:    hostName,
+			Timeout: 5, // default: 5 seconds
+			Logs:    []Event{},
 		}
 		err = io.SaveIndentedJSON(cfg, path)
 		if err != nil {
