@@ -1,42 +1,18 @@
 # dali 
 
-A local network file sharing tool, written in Go.
+A local network peer-to-peer file sharing tool, written in Go.
 
 Dali (다리) means `bridge` in Korean, and also means `fast` in Filipino.
 
 ## Installation
 
+`go install github.com/roidaradal/dali@latest`
+
+OR
+
 Download `dali.exe` from the [releases](https://github.com/roidaradal/dali/releases) page. Add the folder where you saved `dali.exe` to your system PATH.
 
 ## Usage
-
-### Receive files
-
-Start the receiver on a machine to accept incoming file transfers:
-
-```bash
-dali receive                     # Listen on default port (45679)
-dali receive --port 8080         # Listen on custom port
-dali receive --output ./downloads # Save files to specific folder
-```
-
-### Send files
-
-Send a file to another machine running `dali receive`:
-
-```bash
-dali send myfile.txt             # Discover peers and select one
-dali send myfile.txt --to 192.168.1.100:45679  # Send to specific address
-```
-
-### Discover peers
-
-Find other machines running `dali receive` on the local network:
-
-```bash
-dali discover                    # 3 second timeout (default)
-dali discover --timeout 10       # 10 second timeout
-```
 
 ## TODO
 * Set name  
