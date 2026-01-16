@@ -52,19 +52,9 @@ func newAcceptMessage() *TransferMessage {
 	return &TransferMessage{Type: acceptType}
 }
 
-// Deserialize DiscoveryMessage from JSON bytes
-func parseDiscoveryMessage(data []byte) (*DiscoveryMessage, error) {
-	var msg DiscoveryMessage
-	err := json.Unmarshal(data, &msg)
-	if err != nil {
-		return nil, err
-	}
-	return &msg, nil
-}
-
-// Deserialize TransferMessage from JSON bytes
-func parseTransferMessage(data []byte) (*TransferMessage, error) {
-	var msg TransferMessage
+// Deserialize (DiscoveryMessage|TransferMessage) from JSON bytes
+func parseMessage[T any](data []byte) (*T, error) {
+	var msg T
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
 		return nil, err

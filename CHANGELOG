@@ -3,7 +3,7 @@ v0.1.2 - Feature Updates
     x Set defaultTimeout to 3s
     x Lowercase command and option keys
     x Update README Usage
-    - Transfer command implementations to internal package 
+    x Transfer command implementations to internal package 
     - Improve help command
     - Find options (name, ip)
     - Open accept option (auto, default: ask)

@@ -8,35 +8,33 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/schollz/progressbar/v3"
 )
 
 // Chunk size for file transfer (64KB)
 const chunkSize int = 64 * 1024
 
 // Send file to specified address
-func SendFile(addr string, filePath string) error {
+func sendFile(addr string, filePath string) error {
 	// Open file and get info
 	file, err := os.Open(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return wrapErr("failed to open file", err)
 	}
 	defer file.Close()
 
 	info, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("failed to get file info: %w", err)
+		return wrapErr("failed to get file info", err)
 	}
 
 	fileSize := uint64(info.Size())
 	fileName := filepath.Base(filePath)
 
-	// Connect to peer
+	// Connect to peer via TCP
 	fmt.Printf("Connecting to %s...\n", addr)
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("failed to conect: %w", err)
+		return wrapErr("failed to connect", err)
 	}
 	defer conn.Close()
 
@@ -44,22 +42,23 @@ func SendFile(addr string, filePath string) error {
 	offer := newOfferMessage(fileName, fileSize)
 	_, err = conn.Write(offer.ToBytes())
 	if err != nil {
-		return fmt.Errorf("failed to send file offer: %w", err)
+		return wrapErr("failed to send file offer", err)
 	}
 
 	// Wait for response
 	reader := bufio.NewReader(conn)
 	responseLine, err := reader.ReadString('\n')
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		return wrapErr("failed to read response", err)
 	}
 	responseLine = strings.TrimSpace(responseLine)
 
-	response, err := parseTransferMessage([]byte(responseLine))
+	response, err := parseMessage[TransferMessage]([]byte(responseLine))
 	if err != nil {
-		return fmt.Errorf("invalid response: %w", err)
+		return wrapErr("invalid response", err)
 	}
 
+	// Check if responseType is 'accept'
 	switch response.Type {
 	case acceptType:
 		fmt.Printf("Peer accepted. Sending %q...\n", fileName)
@@ -79,12 +78,12 @@ func SendFile(addr string, filePath string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("failed to read file: %w", err)
+			return wrapErr("failed to read file", err)
 		}
 
 		_, err = conn.Write(buf[:n])
 		if err != nil {
-			return fmt.Errorf("failed to send data: %w", err)
+			return wrapErr("failed to send data", err)
 		}
 		bar.Add(n)
 	}
@@ -94,11 +93,12 @@ func SendFile(addr string, filePath string) error {
 }
 
 // Listens for incoming file transfers
-func ReceiveFiles(port uint16, outputDir string) error {
+func receiveFiles(port uint16, outputDir string) error {
+	// Listen to port via TCP
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %w", err)
+		return wrapErr("failed to listen", err)
 	}
 	defer listener.Close()
 
@@ -126,13 +126,13 @@ func handleIncomingTransfer(conn net.Conn, outputDir string) error {
 	// Read file offer
 	offerLine, err := reader.ReadString('\n')
 	if err != nil {
-		return fmt.Errorf("failed to read offer: %w", err)
+		return wrapErr("failed to read offer", err)
 	}
 	offerLine = strings.TrimSpace(offerLine)
 
-	offer, err := parseTransferMessage([]byte(offerLine))
+	offer, err := parseMessage[TransferMessage]([]byte(offerLine))
 	if err != nil {
-		return fmt.Errorf("invalid offer: %w", err)
+		return wrapErr("invalid offer", err)
 	}
 
 	if offer.Type != offerType {
@@ -142,22 +142,22 @@ func handleIncomingTransfer(conn net.Conn, outputDir string) error {
 	fileName, fileSize := offer.Filename, offer.Size
 	fmt.Printf("Receiving %q (%d bytes)...\n", fileName, fileSize)
 
-	// Auto-accept
+	// Auto-accept for now
+	// TODO: check if auto-accept, otherwise prompt confirmation of receiving file
 	_, err = conn.Write(newAcceptMessage().ToBytes())
 	if err != nil {
-		return fmt.Errorf("failed to send accept: %w", err)
+		return wrapErr("failed to send accept", err)
 	}
 
 	// Receive file data
 	outputPath := filepath.Join(outputDir, fileName)
 	file, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		return wrapErr("failed to create file", err)
 	}
 	defer file.Close()
 
 	bar := newProgressBar(fileSize, "Receiving")
-
 	buf := make([]byte, chunkSize)
 	var received uint64
 
@@ -172,12 +172,12 @@ func handleIncomingTransfer(conn net.Conn, outputDir string) error {
 			if err == io.EOF {
 				break
 			}
-			return fmt.Errorf("failed to read data: %w", err)
+			return wrapErr("failed to read data", err)
 		}
 
 		_, err = file.Write(buf[:n])
 		if err != nil {
-			return fmt.Errorf("failed to write file: %w", err)
+			return wrapErr("failed to write file", err)
 		}
 
 		received += uint64(n)
@@ -186,22 +186,4 @@ func handleIncomingTransfer(conn net.Conn, outputDir string) error {
 
 	fmt.Printf("\n✓ Saved to %q\n", outputPath)
 	return nil
-}
-
-// Create new progress bar
-func newProgressBar(fileSize uint64, title string) *progressbar.ProgressBar {
-	return progressbar.NewOptions64(
-		int64(fileSize),
-		progressbar.OptionSetDescription(title),
-		progressbar.OptionSetWidth(40),
-		progressbar.OptionShowBytes(true),
-		progressbar.OptionShowCount(),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "█",
-			SaucerHead:    "▓",
-			SaucerPadding: "░",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
 }

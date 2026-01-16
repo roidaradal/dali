@@ -8,7 +8,7 @@ import (
 	"github.com/roidaradal/fn/list"
 )
 
-const readDeadlineMs int = 200
+const readDeadlineMs int = 100
 
 type Peer struct {
 	Name string
@@ -16,7 +16,7 @@ type Peer struct {
 }
 
 // DiscoverPeers broadcasts a query and collects peer responses
-func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
+func discoverPeers(timeout time.Duration) ([]Peer, error) {
 	// Create UDP socket for sending, address at 0.0.0.0:0 (port 0 = auto-select open port)
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
@@ -24,19 +24,19 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 	}
 	conn, err := net.ListenUDP("udp4", addr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create UDP socket: %w", err)
+		return nil, wrapErr("failed to create UDP socket", err)
 	}
 	defer conn.Close()
 
 	// Send query to broadcast address, 255.255.255.255:<DISCOVERY_PORT>
 	broadcastAddr := &net.UDPAddr{
 		IP:   net.IPv4bcast,
-		Port: DiscoveryPort,
+		Port: discoveryPort,
 	}
 	query := newQueryMessage()
 	_, err = conn.WriteToUDP(query.ToBytes(), broadcastAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send discovery query: %w", err)
+		return nil, wrapErr("failed to send discovery query", err)
 	}
 
 	// Collect responses
@@ -58,13 +58,11 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 					continue
 				}
 
-				msg, err := parseDiscoveryMessage(buf[:n])
+				msg, err := parseMessage[DiscoveryMessage](buf[:n])
 				if err != nil || msg.Type != announceType {
 					continue // skip on error or non-Announcement messages
 				}
 
-				// mu.Lock() // from vibe code
-				// TODO: Review this line: addr.IP.String() => what IP does it return?
 				peerAddr := fmt.Sprintf("%s:%d", addr.IP.String(), msg.TransferPort)
 
 				// Check if peer already exists
@@ -79,7 +77,6 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 					Name: msg.Name,
 					Addr: peerAddr,
 				})
-				// mu.Unlock() // from vibe code
 			}
 		}
 	}()
@@ -92,15 +89,15 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 }
 
 // RunDiscoveryListener listens for discovery queries and responds with announcements
-func RunDiscoveryListener(name string, transferPort uint16) error {
+func runDiscoveryListener(name string, transferPort uint16) error {
 	// Create UDP socket for listening, address at 0.0.0.0:<DISCOVERY_PORT>
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
-		Port: DiscoveryPort,
+		Port: discoveryPort,
 	}
 	conn, err := net.ListenUDP("udp4", addr)
 	if err != nil {
-		return fmt.Errorf("failed to bind discovery port: %w", err)
+		return wrapErr("failed to bind discovery port", err)
 	}
 	defer conn.Close()
 
@@ -111,7 +108,7 @@ func RunDiscoveryListener(name string, transferPort uint16) error {
 			continue
 		}
 
-		msg, err := parseDiscoveryMessage(buf[:n])
+		msg, err := parseMessage[DiscoveryMessage](buf[:n])
 		if err != nil || msg.Type != queryType {
 			continue // skip on error or non-Query messages
 		}

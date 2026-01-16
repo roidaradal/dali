@@ -65,6 +65,7 @@ dali version    # Display current version
 * Create background process for listening 
 * Allow viewing of shared folder in network
 * Allow fetching of file in shared folder
+* Fix: machine has multiple IPv4 addresses (WiFi, LAN)
 
 ## Test Scenarios
 * 2 senders for 1 receiver, at the same time
