@@ -71,7 +71,16 @@ func main() {
 		}
 		fmt.Printf("Output folder: %s\n", outputDir)
 		fmt.Printf("Listening for requests on local network at port %d...\n", listenPort)
-		dali.RunDiscoveryListener(node.Name, listenPort)
+
+		// Run discovery listener in the background
+		go func() {
+			dali.RunDiscoveryListener(node.Name, listenPort)
+		}()
+
+		err := dali.ReceiveFiles(listenPort, outputDir)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	default:
 		fmt.Println("\nUsage: dali <command> (option=value...)")
 	}

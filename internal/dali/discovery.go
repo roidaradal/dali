@@ -8,7 +8,12 @@ import (
 	"github.com/roidaradal/fn/list"
 )
 
-const readDeadlineMs int = 250
+const readDeadlineMs int = 200
+
+type Peer struct {
+	Name string
+	Addr string
+}
 
 // DiscoverPeers broadcasts a query and collects peer responses
 func DiscoverPeers(timeout time.Duration) ([]Peer, error) {

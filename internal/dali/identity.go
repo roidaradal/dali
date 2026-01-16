@@ -2,6 +2,7 @@ package dali
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,6 +66,27 @@ func LoadNode() (*Node, error) {
 		Addr:   addr,
 	}
 	return node, nil
+}
+
+// Get local IPv4 address
+func getLocalIPv4Address() (string, error) {
+	host, err := os.Hostname()
+	if err != nil {
+		return "", err
+	}
+
+	addrs, err := net.LookupIP(host)
+	if err != nil {
+		return "", err
+	}
+
+	for _, addr := range addrs {
+		if ipv4 := addr.To4(); ipv4 != nil && !ipv4.IsLoopback() {
+			return ipv4.String(), nil
+		}
+	}
+
+	return "", nil
 }
 
 // Remove spaces from name

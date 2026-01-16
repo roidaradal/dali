@@ -16,16 +16,16 @@ Download `dali.exe` from the [releases](https://github.com/roidaradal/dali/relea
 
 ## TODO
 * Help and Version command
-* find with name, IPaddress options
-* Allow setting of output folder
-* Allow viewing of shared folder in network
-* Allow fetching of file in shared folder
 * Add local logs for sending/receiving 
-* Auto-send if only one peer discovered
+* View logs
+* find with name, IPaddress options
+* Auto-send if only one peer discovered (autosend flag)
 * Add _1 for duplicate filenames (no override)
-* Allow sending of files to computer name, not IPaddress
+* Allow sending of files to name, not IPaddress
 * Make GUI
 * Create background process for listening 
+* Allow viewing of shared folder in network
+* Allow fetching of file in shared folder
 
 ## Test Scenarios
 * 2 senders for 1 receiver, at the same time

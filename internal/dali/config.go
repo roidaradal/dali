@@ -12,6 +12,11 @@ const cfgPath string = ".dali"
 // Default timeout: 5 seconds
 const defaultTimeout int = 5
 
+var (
+	DiscoveryPort int    = 45678 // UDP discovery port
+	TransferPort  uint16 = 45679 // TCP transfer port
+)
+
 type Config struct {
 	Path    string `json:"-"`
 	Name    string
