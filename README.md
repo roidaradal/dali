@@ -15,14 +15,17 @@ Download `dali.exe` from the [releases](https://github.com/roidaradal/dali/relea
 ## Usage
 
 ## TODO
+* Update README Usage 
 * Transfer Command implementation details to internal package
+* Add option for setting accept=auto, default should be accept=ask
+* In Receiving files, should prompt for Accept? Y/N if accept=ask
+* Send Rejection message if not accepted
 * Help and Version command
 * Add local logs for sending/receiving 
 * View logs
 * find with name, IPaddress options
 * Auto-send if only one peer discovered (autosend flag)
 * Add _1 for duplicate filenames (no override)
-* Allow sending of files to name, not IPaddress
 * Make GUI
 * Create background process for listening 
 * Allow viewing of shared folder in network

@@ -8,7 +8,6 @@ const (
 	offerType    string = "offer"
 	acceptType   string = "accept"
 	rejectType   string = "reject"
-	completeType string = "complete"
 )
 
 type DiscoveryMessage struct {
@@ -51,11 +50,6 @@ func newOfferMessage(filename string, size uint64) *TransferMessage {
 // Create new accept TransferMessage
 func newAcceptMessage() *TransferMessage {
 	return &TransferMessage{Type: acceptType}
-}
-
-// Create new reject TransferMessage
-func newRejectMessage() *TransferMessage {
-	return &TransferMessage{Type: rejectType}
 }
 
 // Deserialize DiscoveryMessage from JSON bytes

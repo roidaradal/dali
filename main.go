@@ -163,7 +163,10 @@ func main() {
 		}
 
 		fmt.Printf("Sending %q to %s (%s)...", filePath, peerName, peerAddr)
-		// TODO: dali.SendFile(peerAddr, filePath)
+		err := dali.SendFile(peerAddr, filePath)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	default:
 		fmt.Println("\nUsage: dali <command> (option=value...)")
 	}

@@ -1,0 +1,17 @@
+v0.1.1 - Hand-Coded Dali    
+    - Commit: 
+    x Remove AI-generated code 
+    x Load name and IP address 
+    x Get command and args options 
+    x Set name and timeout (persistent)
+    x Discover peers 
+    x Discovery listener 
+    x Open command options 
+    x Receive file 
+    x Send command options 
+    x Send file
+v0.1.0 - Vibe-Coded Dali 
+    x Commit: 2026-01-14 15:11
+    x Vibe coded (Claude Opus 4.5) in Rust 
+    x Add future features list to README 
+    x Vibe coded (Claude Opus 4.5) conversion of Rust to Go
