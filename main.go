@@ -16,7 +16,7 @@ import (
 	"github.com/roidaradal/fn/number"
 )
 
-const DALI_VERSION string = "0.1.1"
+const DALI_VERSION string = "0.1.2"
 
 func main() {
 	node, err := dali.LoadNode()
@@ -188,14 +188,15 @@ func getCommandArgs() (string, dict.StringMap) {
 	if len(args) < 1 {
 		args = []string{"help"}
 	}
-	command := args[0]
+	command := strings.ToLower(args[0])
 	options := make(dict.StringMap)
 	for _, pair := range args[1:] {
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
 			continue
 		}
-		options[parts[0]] = parts[1]
+		key := strings.ToLower(parts[0])
+		options[key] = parts[1]
 	}
 	return command, options
 }

@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/roidaradal/fn v0.5.45
-	github.com/schollz/progressbar/v3 v3.19.0 
+	github.com/schollz/progressbar/v3 v3.19.0
 )
 
 require (

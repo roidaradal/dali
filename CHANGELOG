@@ -1,3 +1,19 @@
+v0.1.2 - Feature Updates 
+    - Commit: 
+    x Set defaultTimeout to 3s
+    x Lowercase command and option keys
+    x Update README Usage
+    - Transfer command implementations to internal package 
+    - Improve help command
+    - Find options (name, ip)
+    - Open accept option (auto, default: ask)
+        - In Receiving files, prompt Accept? Y/N if accept=ask 
+        - Send rejection message if not accepted
+    - Rename destination path if file exists (suffix _N)
+    - Send auto option (autosend if 1)
+    - Add Logs for sending/receiving 
+    - View logs
+    - Update command 
 v0.1.1 - Hand-Coded Dali    
     x Commit: 2026-01-16 11:21
     x Remove AI-generated code 

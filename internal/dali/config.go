@@ -9,8 +9,8 @@ import (
 // Full path: ~HOME/.dali
 const cfgPath string = ".dali"
 
-// Default timeout: 5 seconds
-const defaultTimeout int = 5
+// Default timeout: 3 seconds
+const defaultTimeout int = 3
 
 var (
 	DiscoveryPort int    = 45678 // UDP discovery port
