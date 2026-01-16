@@ -40,7 +40,9 @@ dali open output={OUT_DIR}      # listen and set output folder
 Find machines running `dali open` on the local network:
 
 ```bash 
-dali find       # Looks for peers in the local network for (timeout) seconds
+dali find               # Look for peers in the local network for (timeout) seconds
+dali find name={NAME}   # Look for peer named {NAME} in local network
+dali find ip={IP_ADDR}  # Look for peer with specified IP address in local network
 ```
 
 ### Send file 

@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/roidaradal/fn/dict"
@@ -73,6 +72,10 @@ var cmdOptions = map[string][][2]string{
 		{"file={FILE_PATH}", "finds peers and select one to send file to"},
 		{"file={FILE_PATH} for={NAME}", "find {NAME} peer and send file"},
 		{"file={FILE_PATH} to={IPADDR:PORT}", "send file to specific address in local network"},
+	},
+	findCmd: {
+		{"name={NAME}", "look for peer {NAME} in local network"},
+		{"ip={IP_ADDR}", "look for peer with specified IP address in local network"},
 	},
 }
 
@@ -196,9 +199,20 @@ func cmdSet(node *Node, options dict.StringMap) error {
 
 // Find command handler
 func cmdFind(node *Node, options dict.StringMap) error {
-	// TODO: add option name=NAME, ip=IPAddr
+	// Options: name=NAME, ip=IPAddr
+	peerName, peerAddr := anyone, anyone
+	for k, v := range options {
+		switch k {
+		case "name":
+			// Make sure name has no spaces
+			peerName = compressName(v)
+		case "ip":
+			peerAddr = v
+		}
+	}
+
 	fmt.Println(findingMessage(node))
-	peers, err := discoverPeers(time.Duration(node.Timeout) * time.Second)
+	peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: peerAddr})
 	if err != nil {
 		return err
 	}
@@ -274,7 +288,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	if peerAddr == "" {
 		// Find peers if no set peer address
 		fmt.Println(findingMessage(node))
-		peers, err := discoverPeers(time.Duration(node.Timeout) * time.Second)
+		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anyone})
 		if err != nil {
 			return wrapErr("discovery failed", err)
 		}
@@ -284,21 +298,8 @@ func cmdSend(node *Node, options dict.StringMap) error {
 			return nil
 		}
 
-		autoSelect := false
-		if peerName != anyone {
-			autoSelect = true
-			targetName := strings.ToLower(peerName)
-			peers = list.Filter(peers, func(peer Peer) bool {
-				return strings.ToLower(peer.Name) == targetName
-			})
-			if len(peers) == 0 {
-				fmt.Printf("Peer %q not found. Make sure device is running `dali %s`\n", peerName, openCmd)
-				return nil
-			}
-		}
-
 		var peerIdx int
-		if autoSelect && len(peers) == 1 {
+		if peerName != anyone && len(peers) == 1 {
 			peerIdx = 0
 		} else {
 			// Let user select recipient

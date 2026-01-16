@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/roidaradal/fn/io"
+	"github.com/roidaradal/fn/str"
 )
 
 const (
@@ -60,9 +61,9 @@ func (n Node) String() string {
 	divider := strings.Repeat("=====", 5)
 	out := []string{
 		divider,
-		fmt.Sprintf("Name: %s", n.Name),
-		fmt.Sprintf("Addr: %s", n.Addr),
-		fmt.Sprintf("Wait: %d", n.Timeout),
+		fmt.Sprintf("Name: %s", str.Green(n.Name)),
+		fmt.Sprintf("Addr: %s", str.Yellow(n.Addr)),
+		fmt.Sprintf("Wait: %s", str.Red(str.Int(n.Timeout))),
 		divider,
 	}
 	return strings.Join(out, "\n")

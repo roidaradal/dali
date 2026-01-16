@@ -3,6 +3,7 @@ package dali
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/roidaradal/fn/list"
@@ -16,7 +17,7 @@ type Peer struct {
 }
 
 // DiscoverPeers broadcasts a query and collects peer responses
-func discoverPeers(timeout time.Duration) ([]Peer, error) {
+func discoverPeers(timeout time.Duration, filter Peer) ([]Peer, error) {
 	// Create UDP socket for sending, address at 0.0.0.0:0 (port 0 = auto-select open port)
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
@@ -84,6 +85,16 @@ func discoverPeers(timeout time.Duration) ([]Peer, error) {
 	// Wait for timeout
 	time.Sleep(timeout)
 	close(done)
+
+	if filter.Name != anyone || filter.Addr != anyone {
+		targetName := strings.ToLower(filter.Name)
+		targetAddr := fmt.Sprintf("%s:", filter.Addr)
+		peers = list.Filter(peers, func(peer Peer) bool {
+			ok1 := filter.Name == anyone || strings.ToLower(peer.Name) == targetName
+			ok2 := filter.Addr == anyone || strings.HasPrefix(peer.Addr, targetAddr)
+			return ok1 && ok2
+		})
+	}
 
 	return peers, nil
 }
