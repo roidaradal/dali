@@ -15,7 +15,8 @@ Download `dali.exe` from the [releases](https://github.com/roidaradal/dali/relea
 ## Usage
 
 ## TODO
-* Set name  
+* Help and Version command
+* find with name, IPaddress options
 * Allow setting of output folder
 * Allow viewing of shared folder in network
 * Allow fetching of file in shared folder

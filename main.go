@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/roidaradal/dali/internal/dali"
 	"github.com/roidaradal/fn/dict"
+	"github.com/roidaradal/fn/list"
 )
 
 func main() {
@@ -27,8 +30,29 @@ func main() {
 		}
 		fmt.Println("Updated:")
 		fmt.Println(node)
+	case "find":
+		fmt.Printf("Finding peers on local network for %ds...\n", node.Timeout)
+		peers, err := dali.DiscoverPeers(time.Duration(node.Timeout) * time.Second)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		if len(peers) == 0 {
+			fmt.Println("No peers found.")
+			return
+		}
+
+		fmt.Printf("Found %d peers:\n", len(peers))
+		maxLength := slices.Max(list.Map(peers, func(p dali.Peer) int {
+			return len(p.Name)
+		}))
+		template := fmt.Sprintf("  • %%%ds : %%s\n", maxLength)
+		for _, peer := range peers {
+			fmt.Printf(template, peer.Name, peer.Addr)
+		}
 	default:
-		fmt.Println("Usage: dali <command> (option=value...)")
+		fmt.Println("\nUsage: dali <command> (option=value...)")
 	}
 }
 

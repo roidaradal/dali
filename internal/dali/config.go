@@ -42,7 +42,7 @@ func (c *Config) Update(options dict.StringMap) error {
 		switch k {
 		case "name":
 			c.Name = v
-		case "timeout":
+		case "timeout", "wait":
 			c.Timeout = max(defaultTimeout, number.ParseInt(v))
 		}
 	}

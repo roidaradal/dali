@@ -5,6 +5,16 @@ import (
 	"os"
 )
 
+var (
+	DiscoveryPort uint16 = 45678 // UDP discovery port
+	TransferPort  uint16 = 45679 // TCP transfer port
+)
+
+type Peer struct {
+	Name string
+	Addr string
+}
+
 // Get local IPv4 address
 func getLocalIPv4Address() (string, error) {
 	host, err := os.Hostname()
