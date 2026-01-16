@@ -4,6 +4,7 @@ package dali
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -25,6 +26,7 @@ const (
 	setCmd     string = "set"
 	findCmd    string = "find"
 	sendCmd    string = "send"
+	updateCmd  string = "update"
 )
 
 var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
@@ -34,18 +36,20 @@ var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
 	findCmd:    cmdFind,
 	openCmd:    cmdOpen,
 	sendCmd:    cmdSend,
+	updateCmd:  cmdUpdate,
 }
 
 // List of commands, ordered for help
-var commands = []string{setCmd, openCmd, sendCmd, findCmd, versionCmd, HelpCmd}
+var commands = []string{setCmd, openCmd, sendCmd, findCmd, updateCmd, versionCmd, HelpCmd}
 
 var cmdColor = map[string]func(string) string{
-	HelpCmd:    str.Violet,
-	versionCmd: str.Blue,
+	HelpCmd:    str.Red,
+	versionCmd: str.Violet,
 	setCmd:     str.Red,
 	findCmd:    str.Cyan,
 	openCmd:    str.Yellow,
 	sendCmd:    str.Green,
+	updateCmd:  str.Blue,
 }
 
 var cmdText = dict.StringMap{
@@ -55,6 +59,7 @@ var cmdText = dict.StringMap{
 	findCmd:    "discover open machines on local network",
 	openCmd:    "opens the machine to receive files and discovery",
 	sendCmd:    "send file to an open machine",
+	updateCmd:  "update dali to latest (or specific) version",
 }
 
 var cmdOptions = map[string][][2]string{
@@ -64,10 +69,11 @@ var cmdOptions = map[string][][2]string{
 		{"timeout={TIMEOUT_SECS}", "set waiting time (in seconds) for finding peers"},
 	},
 	openCmd: {
-		{"accept=auto", "auto-accepts incoming file transfers"},
+		{"", "listen on default port (45679)"},
 		{"port={PORT}", "listen on custom port"},
 		{"out={OUT_DIR}", "set custom output folder"},
 		{"output={OUT_DIR}", "set custom output folder"},
+		{"accept=auto", "auto-accepts incoming file transfers"},
 	},
 	sendCmd: {
 		{"file={FILE_PATH}", "finds peers and select one to send file to"},
@@ -75,8 +81,14 @@ var cmdOptions = map[string][][2]string{
 		{"file={FILE_PATH} to={IPADDR:PORT}", "send file to specific address in local network"},
 	},
 	findCmd: {
+		{"", "look for all peers in local network"},
 		{"name={NAME}", "look for peer {NAME} in local network"},
 		{"ip={IP_ADDR}", "look for peer with specified IP address in local network"},
+	},
+	updateCmd: {
+		{"", "update to latest version"},
+		{"v=0.1.0", "update to specific version"},
+		{"version=0.1.0", "update to specific version"},
 	},
 }
 
@@ -150,7 +162,6 @@ func cmdHelp(_ *Node, _ dict.StringMap) error {
 		// Get command options
 		optionPairs := cmdOptions[cmd]
 		if len(optionPairs) == 0 {
-			fmt.Println()
 			continue
 		}
 		descriptions := list.Map(optionPairs, func(pair [2]string) string {
@@ -173,6 +184,30 @@ func cmdHelp(_ *Node, _ dict.StringMap) error {
 func cmdVersion(_ *Node, _ dict.StringMap) error {
 	version := fmt.Sprintf("dali v%s", currentVersion)
 	fmt.Printf("\n%s\n", str.Green(version))
+	return nil
+}
+
+// Update command handler
+func cmdUpdate(_ *Node, options dict.StringMap) error {
+	version := "latest"
+	for k, v := range options {
+		switch k {
+		case "v", "version":
+			version = v
+		}
+	}
+	cmd1, cmd2 := "go", "install"
+	cmd3 := fmt.Sprintf("github.com/roidaradal/dali@%s", version)
+
+	fmt.Printf("Running: %s %s %s ... ", cmd1, cmd2, cmd3)
+	cmd := exec.Command("cmd", "/c", cmd1, cmd2, cmd3)
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("FAIL")
+		return err
+	}
+	fmt.Println("OK")
 	return nil
 }
 

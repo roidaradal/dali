@@ -55,6 +55,16 @@ dali send file={FILE_PATH} for={NAME}       # Find peer named {NAME} and send fi
 dali send file={FILE_PATH} to={IPADDR:PORT} # Send file to specific address in local network
 ```
 
+### Update 
+
+Update dali to latest (or specific) version:
+
+```bash
+dali update                 # Update dali to latest version
+dali update v=0.1.0         # Update dali to specific version
+dali update version=0.1.0   # Update dali to specific version
+```
+
 ### Other commands 
 
 ```bash
