@@ -11,6 +11,7 @@ import (
 	"github.com/roidaradal/dali/internal/dali"
 	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/list"
+	"github.com/roidaradal/fn/number"
 )
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 	command, options := getCommandArgs()
 	switch command {
 	case "set":
+		// Options: name=NAME, timeout=X, wait=X
 		err = node.Config.Update(options)
 		if err != nil {
 			fmt.Println("Error:", err)
@@ -31,6 +33,7 @@ func main() {
 		fmt.Println("Updated:")
 		fmt.Println(node)
 	case "find":
+		// TODO: add option name=NAME, ip=IPAddr
 		fmt.Printf("Finding peers on local network for %ds...\n", node.Timeout)
 		peers, err := dali.DiscoverPeers(time.Duration(node.Timeout) * time.Second)
 		if err != nil {
@@ -52,8 +55,23 @@ func main() {
 			fmt.Printf(template, peer.Name, peer.Addr)
 		}
 	case "open":
-		fmt.Println("Listening for requests on local network...")
-		dali.RunDiscoveryListener(node.Name, dali.TransferPort)
+		// Options: port=CUSTOM_PORT, output=OUT_DIR, out=OUT_DIR
+		listenPort := dali.TransferPort // default port
+		outputDir := "."                // default: current dir
+		for k, v := range options {
+			switch k {
+			case "port":
+				customPort := number.ParseInt(v)
+				if customPort > 0 {
+					listenPort = uint16(customPort)
+				}
+			case "output", "out":
+				outputDir = v
+			}
+		}
+		fmt.Printf("Output folder: %s\n", outputDir)
+		fmt.Printf("Listening for requests on local network at port %d...\n", listenPort)
+		dali.RunDiscoveryListener(node.Name, listenPort)
 	default:
 		fmt.Println("\nUsage: dali <command> (option=value...)")
 	}

@@ -26,7 +26,7 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 	// Send query to broadcast address, 255.255.255.255:<DISCOVERY_PORT>
 	broadcastAddr := &net.UDPAddr{
 		IP:   net.IPv4bcast,
-		Port: int(DiscoveryPort),
+		Port: DiscoveryPort,
 	}
 	query := newQueryMessage()
 	_, err = conn.WriteToUDP(query.ToBytes(), broadcastAddr)
@@ -91,7 +91,7 @@ func RunDiscoveryListener(name string, transferPort uint16) error {
 	// Create UDP socket for listening, address at 0.0.0.0:<DISCOVERY_PORT>
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
-		Port: int(DiscoveryPort),
+		Port: DiscoveryPort,
 	}
 	conn, err := net.ListenUDP("udp4", addr)
 	if err != nil {
@@ -112,6 +112,7 @@ func RunDiscoveryListener(name string, transferPort uint16) error {
 		}
 
 		// Respond with our announcement
+		name = compressName(name)
 		announce := newAnnounceMessage(name, transferPort)
 		conn.WriteToUDP(announce.ToBytes(), peerAddr)
 	}

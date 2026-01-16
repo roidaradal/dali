@@ -41,6 +41,7 @@ func LoadNode() (*Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get hostname: %w", err)
 		}
+		hostName = compressName(hostName)
 		err = io.SaveIndentedJSON(newConfig(hostName), path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize dali config: %w", err)
@@ -64,4 +65,9 @@ func LoadNode() (*Node, error) {
 		Addr:   addr,
 	}
 	return node, nil
+}
+
+// Remove spaces from name
+func compressName(name string) string {
+	return strings.Join(strings.Fields(name), "")
 }

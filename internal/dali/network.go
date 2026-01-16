@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	DiscoveryPort uint16 = 45678 // UDP discovery port
+	DiscoveryPort int    = 45678 // UDP discovery port
 	TransferPort  uint16 = 45679 // TCP transfer port
 )
 

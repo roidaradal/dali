@@ -41,7 +41,7 @@ func (c *Config) Update(options dict.StringMap) error {
 	for k, v := range options {
 		switch k {
 		case "name":
-			c.Name = v
+			c.Name = compressName(v)
 		case "timeout", "wait":
 			c.Timeout = max(defaultTimeout, number.ParseInt(v))
 		}
