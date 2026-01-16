@@ -16,6 +16,8 @@ import (
 	"github.com/roidaradal/fn/number"
 )
 
+const DALI_VERSION string = "0.1.1"
+
 func main() {
 	node, err := dali.LoadNode()
 	if err != nil {
@@ -25,8 +27,17 @@ func main() {
 	findMessage := fmt.Sprintf("Finding peers on local network for %ds...\n", node.Timeout)
 	findTimeout := time.Duration(node.Timeout) * time.Second
 
+	daliCommands := []string{"help", "version", "set", "find", "open", "send"}
+
 	command, options := getCommandArgs()
 	switch command {
+	case "help":
+		fmt.Printf("\n%d dali commands:\n", len(daliCommands))
+		for _, cmd := range daliCommands {
+			fmt.Printf("  • %s\n", cmd)
+		}
+	case "version":
+		fmt.Printf("\ndali version %s\n", DALI_VERSION)
 	case "set":
 		// Options: name=NAME, timeout=X, wait=X
 		err = node.Config.Update(options)

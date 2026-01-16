@@ -1,5 +1,5 @@
 v0.1.1 - Hand-Coded Dali    
-    - Commit: 
+    x Commit: 2026-01-16 11:21
     x Remove AI-generated code 
     x Load name and IP address 
     x Get command and args options 
@@ -10,6 +10,7 @@ v0.1.1 - Hand-Coded Dali
     x Receive file 
     x Send command options 
     x Send file
+    x Version and commands list
 v0.1.0 - Vibe-Coded Dali 
     x Commit: 2026-01-14 15:11
     x Vibe coded (Claude Opus 4.5) in Rust 
