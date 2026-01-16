@@ -15,6 +15,7 @@ Download `dali.exe` from the [releases](https://github.com/roidaradal/dali/relea
 ## Usage
 
 ## TODO
+* Transfer Command implementation details to internal package
 * Help and Version command
 * Add local logs for sending/receiving 
 * View logs

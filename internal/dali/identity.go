@@ -10,6 +10,8 @@ import (
 	"github.com/roidaradal/fn/io"
 )
 
+const Any string = "*"
+
 type Node struct {
 	*Config
 	Addr string
