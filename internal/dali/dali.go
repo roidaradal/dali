@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,26 +14,67 @@ import (
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/number"
+	"github.com/roidaradal/fn/str"
 )
 
 const currentVersion string = "0.1.2"
 
 const (
-	HelpCmd string = "help"
-	openCmd string = "open"
+	HelpCmd    string = "help"
+	openCmd    string = "open"
+	versionCmd string = "version"
+	setCmd     string = "set"
+	findCmd    string = "find"
+	sendCmd    string = "send"
 )
 
 var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
-	HelpCmd:   cmdHelp,
-	"version": cmdVersion,
-	"set":     cmdSet,
-	"find":    cmdFind,
-	openCmd:   cmdOpen,
-	"send":    cmdSend,
+	HelpCmd:    cmdHelp,
+	versionCmd: cmdVersion,
+	setCmd:     cmdSet,
+	findCmd:    cmdFind,
+	openCmd:    cmdOpen,
+	sendCmd:    cmdSend,
 }
 
 // List of commands, ordered for help
-var commands = []string{"set", openCmd, "find", "send", "version", HelpCmd}
+var commands = []string{setCmd, openCmd, sendCmd, findCmd, versionCmd, HelpCmd}
+
+var cmdColor = map[string]func(string) string{
+	HelpCmd:    str.Violet,
+	versionCmd: str.Blue,
+	setCmd:     str.Red,
+	findCmd:    str.Cyan,
+	openCmd:    str.Yellow,
+	sendCmd:    str.Green,
+}
+
+var cmdText = dict.StringMap{
+	HelpCmd:    "display help message",
+	versionCmd: "display current version",
+	setCmd:     "update name and waiting time",
+	findCmd:    "discover open machines on local network",
+	openCmd:    "opens the machine to receive files and discovery",
+	sendCmd:    "send file to an open machine",
+}
+
+var cmdOptions = map[string][][2]string{
+	setCmd: {
+		{"name={NAME}", "set your name (no spaces)"},
+		{"wait={TIMEOUT_SECS}", "set waiting time (in seconds) for finding peers"},
+		{"timeout={TIMEOUT_SECS}", "set waiting time (in seconds) for finding peers"},
+	},
+	openCmd: {
+		{"port={PORT}", "listen on custom port"},
+		{"out={OUT_DIR}", "set custom output folder"},
+		{"output={OUT_DIR}", "set custom output folder"},
+	},
+	sendCmd: {
+		{"file={FILE_PATH}", "finds peers and select one to send file to"},
+		{"file={FILE_PATH} for={NAME}", "find {NAME} peer and send file"},
+		{"file={FILE_PATH} to={IPADDR:PORT}", "send file to specific address in local network"},
+	},
+}
 
 // Load user node
 func LoadNode() (*Node, error) {
@@ -83,18 +125,50 @@ func LoadNode() (*Node, error) {
 }
 
 // Help command handler
-func cmdHelp(node *Node, options dict.StringMap) error {
+func cmdHelp(_ *Node, _ dict.StringMap) error {
 	fmt.Println("\nUsage: dali <command> (option=value)*")
 	fmt.Printf("\n%d dali commands:\n", len(commands))
 	for _, cmd := range commands {
-		fmt.Printf("  • %s\n", cmd)
+		// Get command description
+		description := ""
+		if text, ok := cmdText[cmd]; ok {
+			description = fmt.Sprintf(" - %s", text)
+		}
+
+		// Get command color
+		coloredCmd := cmd
+		if color, ok := cmdColor[cmd]; ok {
+			coloredCmd = color(cmd)
+		}
+
+		fmt.Printf("  • %s %s\n", coloredCmd, description)
+
+		// Get command options
+		optionPairs := cmdOptions[cmd]
+		if len(optionPairs) == 0 {
+			fmt.Println()
+			continue
+		}
+		descriptions := list.Map(optionPairs, func(pair [2]string) string {
+			return pair[1]
+		})
+		options := list.Map(optionPairs, func(pair [2]string) string {
+			return fmt.Sprintf("dali %s %s", coloredCmd, pair[0])
+		})
+		maxLength := slices.Max(list.Map(options, str.Length))
+		template := fmt.Sprintf("      ▪ %%-%ds - %%s\n", maxLength)
+		for i, option := range options {
+			fmt.Printf(template, option, descriptions[i])
+		}
+		fmt.Println()
 	}
 	return nil
 }
 
 // Version command handler
-func cmdVersion(node *Node, options dict.StringMap) error {
-	fmt.Printf("\ndali v%s\n", currentVersion)
+func cmdVersion(_ *Node, _ dict.StringMap) error {
+	version := fmt.Sprintf("dali v%s", currentVersion)
+	fmt.Printf("\n%s\n", str.Green(version))
 	return nil
 }
 
@@ -176,7 +250,6 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 
 // Send command handler
 func cmdSend(node *Node, options dict.StringMap) error {
-
 	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME
 	filePath, peerAddr, peerName := "", "", anyone
 	for k, v := range options {

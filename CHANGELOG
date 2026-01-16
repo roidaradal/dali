@@ -4,7 +4,7 @@ v0.1.2 - Feature Updates
     x Lowercase command and option keys
     x Update README Usage
     x Transfer command implementations to internal package 
-    - Improve help command
+    x Improve help command
     - Find options (name, ip)
     - Open accept option (auto, default: ask)
         - In Receiving files, prompt Accept? Y/N if accept=ask 
