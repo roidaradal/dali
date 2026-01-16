@@ -18,6 +18,7 @@ type DiscoveryMessage struct {
 
 type TransferMessage struct {
 	Type     string // offer, accept, reject, complete
+	Sender   string // sender name (for offer)
 	Filename string // file name (for offer)
 	Size     uint64 // file size (for offer)
 }
@@ -39,9 +40,10 @@ func newAnnounceMessage(name string, transferPort uint16) *DiscoveryMessage {
 }
 
 // Create new offer TransferMessage
-func newOfferMessage(filename string, size uint64) *TransferMessage {
+func newOfferMessage(sender, filename string, size uint64) *TransferMessage {
 	return &TransferMessage{
 		Type:     offerType,
+		Sender:   sender,
 		Filename: filename,
 		Size:     size,
 	}
@@ -50,6 +52,11 @@ func newOfferMessage(filename string, size uint64) *TransferMessage {
 // Create new accept TransferMessage
 func newAcceptMessage() *TransferMessage {
 	return &TransferMessage{Type: acceptType}
+}
+
+// Create new reject TransferMessage
+func newRejectMessage() *TransferMessage {
+	return &TransferMessage{Type: rejectType}
 }
 
 // Deserialize (DiscoveryMessage|TransferMessage) from JSON bytes

@@ -2,11 +2,11 @@
 package dali
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/roidaradal/fn/dict"
@@ -64,6 +64,7 @@ var cmdOptions = map[string][][2]string{
 		{"timeout={TIMEOUT_SECS}", "set waiting time (in seconds) for finding peers"},
 	},
 	openCmd: {
+		{"accept=auto", "auto-accepts incoming file transfers"},
 		{"port={PORT}", "listen on custom port"},
 		{"out={OUT_DIR}", "set custom output folder"},
 		{"output={OUT_DIR}", "set custom output folder"},
@@ -233,9 +234,10 @@ func cmdFind(node *Node, options dict.StringMap) error {
 
 // Open command handler
 func cmdOpen(node *Node, options dict.StringMap) error {
-	// Options: port=CUSTOM_PORT, output=OUT_DIR, out=OUT_DIR
+	// Options: port=CUSTOM_PORT, output=OUT_DIR, out=OUT_DIR, accept=auto
 	listenPort := transferPort // default port
 	outputDir := "."           // default: current dir
+	autoAccept := false
 	for k, v := range options {
 		switch k {
 		case "port":
@@ -245,6 +247,8 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 			}
 		case "output", "out":
 			outputDir = v
+		case "accept":
+			autoAccept = strings.ToLower(v) == "auto"
 		}
 	}
 	fmt.Printf("Output folder: %s\n", outputDir)
@@ -255,7 +259,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 		runDiscoveryListener(node.Name, listenPort)
 	}()
 
-	err := receiveFiles(listenPort, outputDir)
+	err := receiveFiles(listenPort, outputDir, autoAccept)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -312,8 +316,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 			}
 
 			fmt.Println("\nEnter peer number to send to:")
-			reader := bufio.NewReader(os.Stdin)
-			input, _ := reader.ReadString('\n')
+			input := readInput()
 			choice := number.ParseInt(input)
 			if choice < 1 || choice > numPeers {
 				return fmt.Errorf("invalid selection")
@@ -326,5 +329,5 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	}
 
 	fmt.Printf("Sending %q to %s (%s)...", filePath, peerName, peerAddr)
-	return sendFile(peerAddr, filePath)
+	return sendFile(node.Name, peerAddr, filePath)
 }

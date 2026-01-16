@@ -1,6 +1,7 @@
 package dali
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -73,4 +74,11 @@ func newProgressBar(fileSize uint64, title string) *progressbar.ProgressBar {
 // Create finding peers message
 func findingMessage(node *Node) string {
 	return fmt.Sprintf("Finding peers on local network for %ds...\n", node.Timeout)
+}
+
+// Read input from stdin
+func readInput() string {
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	return strings.TrimSpace(input)
 }

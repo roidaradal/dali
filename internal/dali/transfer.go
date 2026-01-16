@@ -14,7 +14,7 @@ import (
 const chunkSize int = 64 * 1024
 
 // Send file to specified address
-func sendFile(addr string, filePath string) error {
+func sendFile(senderName, addr string, filePath string) error {
 	// Open file and get info
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -39,7 +39,7 @@ func sendFile(addr string, filePath string) error {
 	defer conn.Close()
 
 	// Send file offer
-	offer := newOfferMessage(fileName, fileSize)
+	offer := newOfferMessage(senderName, fileName, fileSize)
 	_, err = conn.Write(offer.ToBytes())
 	if err != nil {
 		return wrapErr("failed to send file offer", err)
@@ -93,7 +93,7 @@ func sendFile(addr string, filePath string) error {
 }
 
 // Listens for incoming file transfers
-func receiveFiles(port uint16, outputDir string) error {
+func receiveFiles(port uint16, outputDir string, autoAccept bool) error {
 	// Listen to port via TCP
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	listener, err := net.Listen("tcp", addr)
@@ -112,7 +112,7 @@ func receiveFiles(port uint16, outputDir string) error {
 
 		go func(c net.Conn) {
 			defer c.Close()
-			if err := handleIncomingTransfer(c, outputDir); err != nil {
+			if err := handleIncomingTransfer(c, outputDir, autoAccept); err != nil {
 				fmt.Printf("Transfer error: %v\n", err)
 			}
 		}(conn)
@@ -120,7 +120,7 @@ func receiveFiles(port uint16, outputDir string) error {
 }
 
 // Handle incoming file transfer
-func handleIncomingTransfer(conn net.Conn, outputDir string) error {
+func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) error {
 	reader := bufio.NewReader(conn)
 
 	// Read file offer
@@ -140,16 +140,34 @@ func handleIncomingTransfer(conn net.Conn, outputDir string) error {
 	}
 
 	fileName, fileSize := offer.Filename, offer.Size
-	fmt.Printf("Receiving %q (%d bytes)...\n", fileName, fileSize)
 
-	// Auto-accept for now
-	// TODO: check if auto-accept, otherwise prompt confirmation of receiving file
-	_, err = conn.Write(newAcceptMessage().ToBytes())
+	var msg *TransferMessage
+	rejected := false
+	if autoAccept {
+		msg = newAcceptMessage()
+	} else {
+		// Prompt confirmation
+		fmt.Printf("Incoming file %q (%d bytes) from %q. Accept? [Type 'N' to reject]: ", fileName, fileSize, offer.Sender)
+		switch readInput() {
+		case "N", "n":
+			msg = newRejectMessage()
+			rejected = true
+		default:
+			msg = newAcceptMessage()
+		}
+	}
+	_, err = conn.Write(msg.ToBytes())
 	if err != nil {
-		return wrapErr("failed to send accept", err)
+		return wrapErr("failed to send response", err)
+	}
+
+	if rejected {
+		fmt.Println("Rejected file transfer.")
+		return nil
 	}
 
 	// Receive file data
+	fmt.Printf("Receiving %q (%d bytes)...\n", fileName, fileSize)
 	outputPath := filepath.Join(outputDir, fileName)
 	file, err := os.Create(outputPath)
 	if err != nil {
