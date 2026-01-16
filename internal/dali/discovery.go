@@ -85,3 +85,34 @@ func DiscoverPeers(timeout time.Duration) ([]Peer, error) {
 
 	return peers, nil
 }
+
+// RunDiscoveryListener listens for discovery queries and responds with announcements
+func RunDiscoveryListener(name string, transferPort uint16) error {
+	// Create UDP socket for listening, address at 0.0.0.0:<DISCOVERY_PORT>
+	addr := &net.UDPAddr{
+		IP:   net.IPv4zero,
+		Port: int(DiscoveryPort),
+	}
+	conn, err := net.ListenUDP("udp4", addr)
+	if err != nil {
+		return fmt.Errorf("failed to bind discovery port: %w", err)
+	}
+	defer conn.Close()
+
+	buf := make([]byte, 1024)
+	for {
+		n, peerAddr, err := conn.ReadFromUDP(buf)
+		if err != nil {
+			continue
+		}
+
+		msg, err := parseDiscoveryMessage(buf[:n])
+		if err != nil || msg.Type != queryType {
+			continue // skip on error or non-Query messages
+		}
+
+		// Respond with our announcement
+		announce := newAnnounceMessage(name, transferPort)
+		conn.WriteToUDP(announce.ToBytes(), peerAddr)
+	}
+}

@@ -28,7 +28,7 @@ func getLocalIPv4Address() (string, error) {
 	}
 
 	for _, addr := range addrs {
-		if ipv4 := addr.To4(); ipv4 != nil {
+		if ipv4 := addr.To4(); ipv4 != nil && !ipv4.IsLoopback() {
 			return ipv4.String(), nil
 		}
 	}

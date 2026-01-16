@@ -51,6 +51,9 @@ func main() {
 		for _, peer := range peers {
 			fmt.Printf(template, peer.Name, peer.Addr)
 		}
+	case "open":
+		fmt.Println("Listening for requests on local network...")
+		dali.RunDiscoveryListener(node.Name, dali.TransferPort)
 	default:
 		fmt.Println("\nUsage: dali <command> (option=value...)")
 	}
