@@ -16,8 +16,8 @@ const (
 	transferPort   uint16 = 45679   // TCP transfer port
 )
 
-// Type, Result, FilePath, FileSize, SenderName, ReceiverName
-type Event [6]string
+// Timestamp, Type, Result, FilePath, FileSize, SenderName, ReceiverName
+type Event [7]string
 
 // User's configuration (name, timeout, logs)
 type Config struct {
@@ -54,11 +54,11 @@ func (c *Config) Save() error {
 }
 
 // Destructure event parts
-func (e Event) Tuple() (eventType, result, filePath, fileSize, senderName, receiverName string) {
-	eventType, result = e[0], e[1]
-	filePath, fileSize = e[2], e[3]
-	senderName, receiverName = e[4], e[5]
-	return eventType, result, filePath, fileSize, senderName, receiverName
+func (e Event) Tuple() (timestamp, eventType, result, filePath, fileSize, senderName, receiverName string) {
+	timestamp, eventType, result = e[0], e[1], e[2]
+	filePath, fileSize = e[3], e[4]
+	senderName, receiverName = e[5], e[6]
+	return timestamp, eventType, result, filePath, fileSize, senderName, receiverName
 }
 
 // String representationof Node

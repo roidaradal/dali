@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/roidaradal/fn/clock"
 )
 
 // Chunk size for file transfer (64KB)
@@ -60,7 +62,7 @@ func sendFile(node *Node, peer Peer, filePath string) error {
 	}
 
 	// Create send event with empty result
-	event := Event{"send", "", filePath, size, node.Name, peer.Name}
+	event := Event{clock.DateTimeNow(), "send", "", filePath, size, node.Name, peer.Name}
 
 	// Check if responseType is 'accept'
 	switch response.Type {
@@ -173,7 +175,7 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 	outputPath := filepath.Join(outputDir, fileName)
 
 	// Create receive event with empty result
-	event := Event{"receive", "", outputPath, size, offer.Sender, node.Name}
+	event := Event{clock.DateTimeNow(), "receive", "", outputPath, size, offer.Sender, node.Name}
 
 	if rejected {
 		addLog(node, event, rejectType)

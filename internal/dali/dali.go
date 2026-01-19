@@ -112,6 +112,18 @@ func LoadNode() (*Node, error) {
 		hostName = compressName(hostName)
 		cfg = newConfig(hostName)
 		cfg.Path = path
+		// Prompt user for custom name and timeout
+		fmt.Println("Welcome to dali!")
+		fmt.Print("Enter your name: ")
+		name := readInput()
+		if name != "" {
+			cfg.Name = name
+		}
+		fmt.Print("Set timeout (default: 3s): ")
+		wait := number.ParseInt(readInput())
+		if wait > 0 {
+			cfg.Timeout = wait
+		}
 		err = cfg.Save()
 		if err != nil {
 			return nil, wrapErr("failed to initialize dali config", err)

@@ -76,9 +76,10 @@ func findingMessage(node *Node) string {
 	return fmt.Sprintf("Finding peers on local network for %ds...\n", node.Timeout)
 }
 
+var inputReader = bufio.NewReader(os.Stdin)
+
 // Read input from stdin
 func readInput() string {
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
+	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
 }
