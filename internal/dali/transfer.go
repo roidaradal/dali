@@ -104,7 +104,7 @@ func sendFile(node *Node, peer Peer, filePath string) error {
 }
 
 // Listens for incoming file transfers
-func receiveFiles(node *Node, port uint16, outputDir string, autoAccept bool) error {
+func receiveFiles(node *Node, port uint16, outputDir string, autoAccept, overwrite bool) error {
 	// Listen to port via TCP
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	listener, err := net.Listen("tcp", addr)
@@ -123,7 +123,7 @@ func receiveFiles(node *Node, port uint16, outputDir string, autoAccept bool) er
 
 		go func(c net.Conn) {
 			defer c.Close()
-			if err := handleIncomingTransfer(node, c, outputDir, autoAccept); err != nil {
+			if err := handleIncomingTransfer(node, c, outputDir, autoAccept, overwrite); err != nil {
 				fmt.Printf("Transfer error: %v\n", err)
 			}
 		}(conn)
@@ -131,7 +131,7 @@ func receiveFiles(node *Node, port uint16, outputDir string, autoAccept bool) er
 }
 
 // Handle incoming file transfer
-func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAccept bool) error {
+func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAccept, overwrite bool) error {
 	reader := bufio.NewReader(conn)
 
 	// Read file offer
@@ -173,7 +173,9 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 		return wrapErr("failed to send response", err)
 	}
 	outputPath := filepath.Join(outputDir, fileName)
-	outputPath = getOutputPath(outputPath)
+	if !overwrite {
+		outputPath = getOutputPath(outputPath)
+	}
 
 	// Create receive event with empty result
 	event := Event{clock.DateTimeNow(), "receive", "", outputPath, size, offer.Sender, node.Name}

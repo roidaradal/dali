@@ -33,6 +33,8 @@ dali open                       # listen on default port (45679)
 dali open port={PORT}           # listen on custom port
 dali open out={OUT_DIR}         # listen and set output folder
 dali open output={OUT_DIR}      # listen and set output folder
+dali open accept=auto           # auto-accepts incoming file transfers
+dali open overwrite             # overwrite old file path if it exists
 ```
 
 ### Find peers 
@@ -53,6 +55,7 @@ Send a file to another machine runing `dali open`:
 dali send file={FILE_PATH}                  # Finds peers and select one to send file to
 dali send file={FILE_PATH} for={NAME}       # Find peer named {NAME} and send file
 dali send file={FILE_PATH} to={IPADDR:PORT} # Send file to specific address in local network
+dali send file={FILE_PATH} auto=1           # Send file automatically if only 1 peer found
 ```
 
 ### Update 

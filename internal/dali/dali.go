@@ -74,11 +74,13 @@ var cmdOptions = map[string][][2]string{
 		{"out={OUT_DIR}", "set custom output folder"},
 		{"output={OUT_DIR}", "set custom output folder"},
 		{"accept=auto", "auto-accepts incoming file transfers"},
+		{"overwrite", "overwrite old file path if it exists"},
 	},
 	sendCmd: {
 		{"file={FILE_PATH}", "finds peers and select one to send file to"},
 		{"file={FILE_PATH} for={NAME}", "find {NAME} peer and send file"},
 		{"file={FILE_PATH} to={IPADDR:PORT}", "send file to specific address in local network"},
+		{"file={FILE_PATH} auto=1", "send file automatically if only 1 peer found"},
 	},
 	findCmd: {
 		{"", "look for all peers in local network"},
@@ -281,10 +283,10 @@ func cmdFind(node *Node, options dict.StringMap) error {
 
 // Open command handler
 func cmdOpen(node *Node, options dict.StringMap) error {
-	// Options: port=CUSTOM_PORT, output=OUT_DIR, out=OUT_DIR, accept=auto
+	// Options: port=CUSTOM_PORT, output=OUT_DIR, out=OUT_DIR, accept=auto, overwrite
 	listenPort := transferPort // default port
 	outputDir := "."           // default: current dir
-	autoAccept := false
+	autoAccept, overwrite := false, false
 	for k, v := range options {
 		switch k {
 		case "port":
@@ -296,6 +298,8 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 			outputDir = v
 		case "accept":
 			autoAccept = strings.ToLower(v) == "auto"
+		case "overwrite":
+			overwrite = true
 		}
 	}
 	fmt.Printf("Output folder: %s\n", outputDir)
@@ -306,7 +310,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 		runDiscoveryListener(node.Name, listenPort)
 	}()
 
-	err := receiveFiles(node, listenPort, outputDir, autoAccept)
+	err := receiveFiles(node, listenPort, outputDir, autoAccept, overwrite)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -315,8 +319,9 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 
 // Send command handler
 func cmdSend(node *Node, options dict.StringMap) error {
-	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME
+	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME, auto=1
 	filePath, peerAddr, peerName := "", "", anyone
+	autoSend := false
 	for k, v := range options {
 		switch k {
 		case "file":
@@ -325,6 +330,8 @@ func cmdSend(node *Node, options dict.StringMap) error {
 			peerAddr = v
 		case "for":
 			peerName = v
+		case "auto":
+			autoSend = v == "1"
 		}
 	}
 
@@ -353,22 +360,27 @@ func cmdSend(node *Node, options dict.StringMap) error {
 		if peerName != anyone && len(peers) == 1 {
 			peerIdx = 0
 		} else {
-			// Let user select recipient
 			numPeers := len(peers)
-			fmt.Printf("\nFound %d peers:\n", numPeers)
-			maxLength := maxPeerNameLength(peers)
-			template := fmt.Sprintf("  [%%2d] %%%ds : %%s\n", maxLength)
-			for i, peer := range peers {
-				fmt.Printf(template, i+1, peer.Name, peer.Addr)
-			}
+			if autoSend && numPeers == 1 {
+				// Check if autosend to any 1 peer
+				peerIdx = 0
+			} else {
+				// Let user select recipient
+				fmt.Printf("\nFound %d peers:\n", numPeers)
+				maxLength := maxPeerNameLength(peers)
+				template := fmt.Sprintf("  [%%2d] %%%ds : %%s\n", maxLength)
+				for i, peer := range peers {
+					fmt.Printf(template, i+1, peer.Name, peer.Addr)
+				}
 
-			fmt.Println("\nEnter peer number to send to:")
-			input := readInput()
-			choice := number.ParseInt(input)
-			if choice < 1 || choice > numPeers {
-				return fmt.Errorf("invalid selection")
+				fmt.Println("\nEnter peer number to send to:")
+				input := readInput()
+				choice := number.ParseInt(input)
+				if choice < 1 || choice > numPeers {
+					return fmt.Errorf("invalid selection")
+				}
+				peerIdx = choice - 1
 			}
-			peerIdx = choice - 1
 		}
 
 		peer := peers[peerIdx]
