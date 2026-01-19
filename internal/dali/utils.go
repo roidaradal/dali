@@ -3,6 +3,7 @@ package dali
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"slices"
@@ -82,4 +83,24 @@ var inputReader = bufio.NewReader(os.Stdin)
 func readInput() string {
 	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
+}
+
+// Convert the number of bytes to string (KB, MB, GB)
+func computeFileSize(numBytes uint64) string {
+	powers := []float64{
+		math.Pow(1024, 3),
+		math.Pow(1024, 2),
+		math.Pow(1024, 1),
+	}
+	names := []string{"GB", "MB", "KB"}
+	bytes := float64(numBytes)
+	for i, denom := range powers {
+		if bytes < denom {
+			continue
+		}
+		value := bytes / denom
+		return fmt.Sprintf("%.1f%s", value, names[i])
+	}
+
+	return fmt.Sprintf("%dB", numBytes)
 }

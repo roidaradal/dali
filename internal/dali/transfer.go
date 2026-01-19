@@ -159,7 +159,7 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 		msg = newAcceptMessage()
 	} else {
 		// Prompt confirmation
-		fmt.Printf("Incoming file %q (%d bytes) from %q. Accept? [Type 'N' to reject]: ", fileName, fileSize, offer.Sender)
+		fmt.Printf("Incoming file %q (%s) from %q. Accept? [Type 'N' to reject]: ", fileName, computeFileSize(fileSize), offer.Sender)
 		switch readInput() {
 		case "N", "n":
 			msg = newRejectMessage()
@@ -227,7 +227,7 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 }
 
 func addLog(node *Node, event Event, result string) {
-	event[1] = result
+	event[2] = result
 	node.Config.AddLog(event)
 	node.Config.Save()
 }

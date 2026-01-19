@@ -1,13 +1,13 @@
-v0.1.3 - Logs 
+v0.1.3 - Event Logging 
     - Commit: 
     x Add Logs for sending/receiving 
     x Prompt name and timeout on first use (no ~/.dali file yet)
-    - View logs
-    - Log filters
-    - Filesize string (Kb, Mb instead of bytes)
+    x Filesize string (Kb, Mb instead of bytes)
     - Rename destination path if file exists (suffix _N)
     - Send auto option (autosend if 1)
     - Check if can prioIP based on profile (e.g. LAN, WiFi)
+    - View logs
+    - Log filters (action, date, from, to, file regexp)
 v0.1.2 - Feature Updates 
     x Commit: 2026-01-16 16:35
     x Set defaultTimeout to 3s
