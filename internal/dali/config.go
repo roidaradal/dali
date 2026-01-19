@@ -16,7 +16,7 @@ const (
 	transferPort   uint16 = 45679   // TCP transfer port
 )
 
-// Type, FilePath, SenderName, SenderAddr, ReceiverName, ReceiverAddr
+// Type, Result, FilePath, FileSize, SenderName, ReceiverName
 type Event [6]string
 
 // User's configuration (name, timeout, logs)
@@ -42,18 +42,23 @@ func newConfig(name string) *Config {
 	}
 }
 
+// Add event log to config
+func (c *Config) AddLog(event Event) {
+	c.Logs = append(c.Logs, event)
+}
+
 // Save the config to file
 func (c *Config) Save() error {
 	// Save config file
-	return io.SaveIndentedJSON(c, c.Path)
+	return io.SaveJSON(c, c.Path)
 }
 
 // Destructure event parts
-func (e Event) Tuple() (eventType, filePath, senderName, senderAddr, receiverName, receiverAddr string) {
-	eventType, filePath = e[0], e[1]
-	senderName, senderAddr = e[2], e[3]
-	receiverName, receiverAddr = e[4], e[5]
-	return eventType, filePath, senderName, senderAddr, receiverName, receiverAddr
+func (e Event) Tuple() (eventType, result, filePath, fileSize, senderName, receiverName string) {
+	eventType, result = e[0], e[1]
+	filePath, fileSize = e[2], e[3]
+	senderName, receiverName = e[4], e[5]
+	return eventType, result, filePath, fileSize, senderName, receiverName
 }
 
 // String representationof Node

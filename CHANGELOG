@@ -2,8 +2,11 @@ v0.1.3 - Logs
     - Commit: 
     - Add Logs for sending/receiving 
     - View logs
+    - Log filters
     - Rename destination path if file exists (suffix _N)
     - Send auto option (autosend if 1)
+    - Prompt name and timeout on first use (no ~/.dali file yet)
+    - Check if can prioIP based on profile (e.g. LAN, WiFi)
 v0.1.2 - Feature Updates 
     x Commit: 2026-01-16 16:35
     x Set defaultTimeout to 3s

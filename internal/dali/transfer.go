@@ -14,7 +14,7 @@ import (
 const chunkSize int = 64 * 1024
 
 // Send file to specified address
-func sendFile(senderName, addr string, filePath string) error {
+func sendFile(node *Node, peer Peer, filePath string) error {
 	// Open file and get info
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -29,17 +29,18 @@ func sendFile(senderName, addr string, filePath string) error {
 
 	fileSize := uint64(info.Size())
 	fileName := filepath.Base(filePath)
+	size := fmt.Sprintf("%d", fileSize)
 
 	// Connect to peer via TCP
-	fmt.Printf("Connecting to %s...\n", addr)
-	conn, err := net.Dial("tcp", addr)
+	fmt.Printf("Connecting to %s...\n", peer.Addr)
+	conn, err := net.Dial("tcp", peer.Addr)
 	if err != nil {
 		return wrapErr("failed to connect", err)
 	}
 	defer conn.Close()
 
 	// Send file offer
-	offer := newOfferMessage(senderName, fileName, fileSize)
+	offer := newOfferMessage(node.Name, fileName, fileSize)
 	_, err = conn.Write(offer.ToBytes())
 	if err != nil {
 		return wrapErr("failed to send file offer", err)
@@ -58,14 +59,19 @@ func sendFile(senderName, addr string, filePath string) error {
 		return wrapErr("invalid response", err)
 	}
 
+	// Create send event with empty result
+	event := Event{"send", "", filePath, size, node.Name, peer.Name}
+
 	// Check if responseType is 'accept'
 	switch response.Type {
 	case acceptType:
 		fmt.Printf("Peer accepted. Sending %q...\n", fileName)
 	case rejectType:
+		addLog(node, event, rejectType)
 		fmt.Println("Peer rejected the file transfer.")
 		return nil
 	default:
+		addLog(node, event, "invalid")
 		return fmt.Errorf("invalid response from peer: %s", response.Type)
 	}
 
@@ -78,22 +84,25 @@ func sendFile(senderName, addr string, filePath string) error {
 			break
 		}
 		if err != nil {
+			addLog(node, event, "fail")
 			return wrapErr("failed to read file", err)
 		}
 
 		_, err = conn.Write(buf[:n])
 		if err != nil {
+			addLog(node, event, "fail")
 			return wrapErr("failed to send data", err)
 		}
 		bar.Add(n)
 	}
 
+	addLog(node, event, "ok")
 	fmt.Println("\n✓ File sent successfully!")
 	return nil
 }
 
 // Listens for incoming file transfers
-func receiveFiles(port uint16, outputDir string, autoAccept bool) error {
+func receiveFiles(node *Node, port uint16, outputDir string, autoAccept bool) error {
 	// Listen to port via TCP
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	listener, err := net.Listen("tcp", addr)
@@ -112,7 +121,7 @@ func receiveFiles(port uint16, outputDir string, autoAccept bool) error {
 
 		go func(c net.Conn) {
 			defer c.Close()
-			if err := handleIncomingTransfer(c, outputDir, autoAccept); err != nil {
+			if err := handleIncomingTransfer(node, c, outputDir, autoAccept); err != nil {
 				fmt.Printf("Transfer error: %v\n", err)
 			}
 		}(conn)
@@ -120,7 +129,7 @@ func receiveFiles(port uint16, outputDir string, autoAccept bool) error {
 }
 
 // Handle incoming file transfer
-func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) error {
+func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAccept bool) error {
 	reader := bufio.NewReader(conn)
 
 	// Read file offer
@@ -140,6 +149,7 @@ func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) er
 	}
 
 	fileName, fileSize := offer.Filename, offer.Size
+	size := fmt.Sprintf("%d", fileSize)
 
 	var msg *TransferMessage
 	rejected := false
@@ -160,17 +170,22 @@ func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) er
 	if err != nil {
 		return wrapErr("failed to send response", err)
 	}
+	outputPath := filepath.Join(outputDir, fileName)
+
+	// Create receive event with empty result
+	event := Event{"receive", "", outputPath, size, offer.Sender, node.Name}
 
 	if rejected {
+		addLog(node, event, rejectType)
 		fmt.Println("Rejected file transfer.")
 		return nil
 	}
 
 	// Receive file data
 	fmt.Printf("Receiving %q (%d bytes)...\n", fileName, fileSize)
-	outputPath := filepath.Join(outputDir, fileName)
 	file, err := os.Create(outputPath)
 	if err != nil {
+		addLog(node, event, "fail")
 		return wrapErr("failed to create file", err)
 	}
 	defer file.Close()
@@ -190,11 +205,13 @@ func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) er
 			if err == io.EOF {
 				break
 			}
+			addLog(node, event, "fail")
 			return wrapErr("failed to read data", err)
 		}
 
 		_, err = file.Write(buf[:n])
 		if err != nil {
+			addLog(node, event, "fail")
 			return wrapErr("failed to write file", err)
 		}
 
@@ -202,6 +219,13 @@ func handleIncomingTransfer(conn net.Conn, outputDir string, autoAccept bool) er
 		bar.Add(n)
 	}
 
+	addLog(node, event, "ok")
 	fmt.Printf("\n✓ Saved to %q\n", outputPath)
 	return nil
+}
+
+func addLog(node *Node, event Event, result string) {
+	event[1] = result
+	node.Config.AddLog(event)
+	node.Config.Save()
 }

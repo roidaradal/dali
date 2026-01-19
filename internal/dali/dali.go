@@ -17,7 +17,7 @@ import (
 	"github.com/roidaradal/fn/str"
 )
 
-const currentVersion string = "0.1.2"
+const currentVersion string = "0.1.3"
 
 const (
 	HelpCmd    string = "help"
@@ -294,7 +294,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 		runDiscoveryListener(node.Name, listenPort)
 	}()
 
-	err := receiveFiles(listenPort, outputDir, autoAccept)
+	err := receiveFiles(node, listenPort, outputDir, autoAccept)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -362,7 +362,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 		peer := peers[peerIdx]
 		peerName, peerAddr = peer.Name, peer.Addr
 	}
-
-	fmt.Printf("Sending %q to %s (%s)...", filePath, peerName, peerAddr)
-	return sendFile(node.Name, peerAddr, filePath)
+	peer := Peer{Name: peerName, Addr: peerAddr}
+	fmt.Printf("Sending %q to %s (%s)...\n", filePath, peerName, peerAddr)
+	return sendFile(node, peer, filePath)
 }
