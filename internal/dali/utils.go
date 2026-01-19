@@ -6,9 +6,11 @@ import (
 	"math"
 	"net"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
 	"github.com/schollz/progressbar/v3"
 )
@@ -101,6 +103,25 @@ func computeFileSize(numBytes uint64) string {
 		value := bytes / denom
 		return fmt.Sprintf("%.1f%s", value, names[i])
 	}
-
 	return fmt.Sprintf("%dB", numBytes)
+}
+
+// Find safe output file path (append _1, _2, ... if file already exists)
+func getOutputPath(path string) string {
+	if !io.PathExists(path) {
+		return path
+	}
+	folder := filepath.Dir(path)
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+	name := strings.TrimSuffix(filename, ext)
+	suffix := 1
+	for {
+		filename2 := fmt.Sprintf("%s_%d%s", name, suffix, ext)
+		path2 := filepath.Join(folder, filename2)
+		if !io.PathExists(path2) {
+			return path2
+		}
+		suffix += 1
+	}
 }

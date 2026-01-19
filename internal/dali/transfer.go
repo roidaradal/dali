@@ -173,6 +173,7 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 		return wrapErr("failed to send response", err)
 	}
 	outputPath := filepath.Join(outputDir, fileName)
+	outputPath = getOutputPath(outputPath)
 
 	// Create receive event with empty result
 	event := Event{clock.DateTimeNow(), "receive", "", outputPath, size, offer.Sender, node.Name}
