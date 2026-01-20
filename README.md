@@ -45,6 +45,7 @@ Find machines running `dali open` on the local network:
 dali find               # Look for peers in the local network for (timeout) seconds
 dali find name={NAME}   # Look for peer named {NAME} in local network
 dali find ip={IP_ADDR}  # Look for peer with specified IP address in local network
+dali find wait          # Wait for timeout to finish looking for peers
 ```
 
 ### Send file 
@@ -56,6 +57,7 @@ dali send file={FILE_PATH}                  # Finds peers and select one to send
 dali send file={FILE_PATH} for={NAME}       # Find peer named {NAME} and send file
 dali send file={FILE_PATH} to={IPADDR:PORT} # Send file to specific address in local network
 dali send file={FILE_PATH} auto=1           # Send file automatically if only 1 peer found
+dali send file={FILE_PATH} wait             # Wait for timeout to finish finding peers
 ```
 
 ### Update 

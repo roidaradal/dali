@@ -99,11 +99,13 @@ var cmdOptions = map[string][][2]string{
 		{"file={FILE_PATH} for={NAME}", "find {NAME} peer and send file"},
 		{"file={FILE_PATH} to={IPADDR:PORT}", "send file to specific address in local network"},
 		{"file={FILE_PATH} auto=1", "send file automatically if only 1 peer found"},
+		{"file={FILE_PATH} wait", "wait for timeout to finish finding peers"},
 	},
 	findCmd: {
 		{"", "look for all peers in local network"},
 		{"name={NAME}", "look for peer {NAME} in local network"},
 		{"ip={IP_ADDR}", "look for peer with specified IP address in local network"},
+		{"wait", "wait for timeout to finish looking for peers"},
 	},
 	updateCmd: {
 		{"", "update to latest version"},
@@ -275,8 +277,9 @@ func cmdSet(node *Node, options dict.StringMap) error {
 
 // Find command handler
 func cmdFind(node *Node, options dict.StringMap) error {
-	// Options: name=NAME, ip=IPAddr
+	// Options: name=NAME, ip=IPAddr, wait
 	peerName, peerAddr := anything, anything
+	endASAP := true
 	for k, v := range options {
 		switch k {
 		case "name":
@@ -284,11 +287,13 @@ func cmdFind(node *Node, options dict.StringMap) error {
 			peerName = compressName(v)
 		case "ip":
 			peerAddr = v
+		case "wait":
+			endASAP = false
 		}
 	}
 
 	fmt.Println(findingMessage(node))
-	peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: peerAddr})
+	peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: peerAddr}, endASAP)
 	if err != nil {
 		return err
 	}
@@ -337,7 +342,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 
 	// Run discovery listener in the background
 	go func() {
-		runDiscoveryListener(node.Name, listenPort)
+		runDiscoveryListener(node.Name, node.Addr, listenPort)
 	}()
 
 	err = receiveFiles(node, listenPort, outputDir, autoAccept, overwrite)
@@ -349,9 +354,10 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 
 // Send command handler
 func cmdSend(node *Node, options dict.StringMap) error {
-	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME, auto=1
+	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME, auto=1, wait
 	filePath, peerAddr, peerName := "", "", anything
 	autoSend := false
+	endASAP := true
 	for k, v := range options {
 		switch k {
 		case "file":
@@ -362,6 +368,8 @@ func cmdSend(node *Node, options dict.StringMap) error {
 			peerName = v
 		case "auto":
 			autoSend = v == "1"
+		case "wait":
+			endASAP = false
 		}
 	}
 
@@ -376,7 +384,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	if peerAddr == "" {
 		// Find peers if no set peer address
 		fmt.Println(findingMessage(node))
-		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anything})
+		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anything}, endASAP)
 		if err != nil {
 			return wrapErr("discovery failed", err)
 		}

@@ -17,7 +17,7 @@ type Peer struct {
 }
 
 // DiscoverPeers broadcasts a query and collects peer responses
-func discoverPeers(timeout time.Duration, filter Peer) ([]Peer, error) {
+func discoverPeers(timeout time.Duration, filter Peer, endASAP bool) ([]Peer, error) {
 	// Create UDP socket for sending, address at 0.0.0.0:0 (port 0 = auto-select open port)
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
@@ -42,65 +42,65 @@ func discoverPeers(timeout time.Duration, filter Peer) ([]Peer, error) {
 
 	// Collect responses
 	var peers []Peer
-	done := make(chan struct{}) // done channel
+
+	targetName := strings.ToLower(filter.Name)
+	targetAddr := fmt.Sprintf("%s:", filter.Addr)
 
 	// Goroutine for collecting responses
 	readDuration := time.Duration(readDeadlineMs) * time.Millisecond
-	go func() {
-		buf := make([]byte, 1024)
-		for {
-			select {
-			case <-done:
-				return // exit loop after timeout finishes
-			default:
-				conn.SetReadDeadline(time.Now().Add(readDuration))
-				n, addr, err := conn.ReadFromUDP(buf)
-				if err != nil {
-					continue
-				}
+	buf := make([]byte, 1024)
+	done := time.After(timeout)
+mainLoop:
+	for {
+		select {
+		case <-done:
+			break mainLoop // exit loop after timeout finishes
+		default:
+			conn.SetReadDeadline(time.Now().Add(readDuration))
+			n, _, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				continue
+			}
 
-				msg, err := parseMessage[DiscoveryMessage](buf[:n])
-				if err != nil || msg.Type != announceType {
-					continue // skip on error or non-Announcement messages
-				}
+			msg, err := parseMessage[DiscoveryMessage](buf[:n])
+			if err != nil || msg.Type != announceType {
+				continue // skip on error or non-Announcement messages
+			}
 
-				peerAddr := fmt.Sprintf("%s:%d", addr.IP.String(), msg.TransferPort)
+			peerAddr := fmt.Sprintf("%s:%d", msg.Addr, msg.TransferPort)
 
-				// Check if peer already exists
-				exists := list.Any(peers, func(p Peer) bool {
-					return p.Addr == peerAddr
-				})
-				if exists {
-					continue
-				}
+			// Check if peer already exists
+			exists := list.Any(peers, func(p Peer) bool {
+				return p.Addr == peerAddr
+			})
+			if exists {
+				continue
+			}
 
-				peers = append(peers, Peer{
-					Name: msg.Name,
-					Addr: peerAddr,
-				})
+			if filter.Name != anything && strings.ToLower(msg.Name) != targetName {
+				continue // skip if name not matched
+			}
+
+			if filter.Addr != anything && !strings.HasPrefix(peerAddr, targetAddr) {
+				continue // skip if addr not matched
+			}
+
+			peers = append(peers, Peer{
+				Name: msg.Name,
+				Addr: peerAddr,
+			})
+
+			if (filter.Name != anything || filter.Addr != anything) && endASAP {
+				break mainLoop // end ASAP if we found peer that satisfies filter
 			}
 		}
-	}()
-
-	// Wait for timeout
-	time.Sleep(timeout)
-	close(done)
-
-	if filter.Name != anything || filter.Addr != anything {
-		targetName := strings.ToLower(filter.Name)
-		targetAddr := fmt.Sprintf("%s:", filter.Addr)
-		peers = list.Filter(peers, func(peer Peer) bool {
-			ok1 := filter.Name == anything || strings.ToLower(peer.Name) == targetName
-			ok2 := filter.Addr == anything || strings.HasPrefix(peer.Addr, targetAddr)
-			return ok1 && ok2
-		})
 	}
 
 	return peers, nil
 }
 
 // RunDiscoveryListener listens for discovery queries and responds with announcements
-func runDiscoveryListener(name string, transferPort uint16) error {
+func runDiscoveryListener(name, ipAddr string, transferPort uint16) error {
 	// Create UDP socket for listening, address at 0.0.0.0:<DISCOVERY_PORT>
 	addr := &net.UDPAddr{
 		IP:   net.IPv4zero,
@@ -126,7 +126,7 @@ func runDiscoveryListener(name string, transferPort uint16) error {
 
 		// Respond with our announcement
 		name = compressName(name)
-		announce := newAnnounceMessage(name, transferPort)
+		announce := newAnnounceMessage(name, ipAddr, transferPort)
 		conn.WriteToUDP(announce.ToBytes(), peerAddr)
 	}
 }

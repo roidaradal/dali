@@ -13,6 +13,7 @@ const (
 type DiscoveryMessage struct {
 	Type         string // query, announce
 	Name         string // peer name (for announce)
+	Addr         string
 	TransferPort uint16 // transfer port (for announce)
 }
 
@@ -31,10 +32,11 @@ func newQueryMessage() *DiscoveryMessage {
 }
 
 // Create new announce DiscoveryMessage
-func newAnnounceMessage(name string, transferPort uint16) *DiscoveryMessage {
+func newAnnounceMessage(name, addr string, transferPort uint16) *DiscoveryMessage {
 	return &DiscoveryMessage{
 		Type:         announceType,
 		Name:         name,
+		Addr:         addr,
 		TransferPort: transferPort,
 	}
 }
