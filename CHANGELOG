@@ -1,5 +1,14 @@
 TODO
 - Finish early in detection if search param found
+- Check if can prio IP based on profile (e.g. LAN, WiFi)
+    - Fix: what if machine has multiple IPv4 address
+- Make GUI 
+    - Create background process for listening
+    - Allow viewing of shared folder in network 
+    - Allow fetching of file in shared folder
+- Test scenarios:
+    - 2 senders for 1 receiver, at the same time
+    -  1 shared folder, multiple downloaders at same time
 ##################################################################
 v0.1.3 - Event Logging 
     - Commit: 
@@ -9,8 +18,8 @@ v0.1.3 - Event Logging
     x Rename destination path if file exists (suffix _N)
     x Open overwrite flag
     x Send auto option (autosend if 1)
-    - Check if can prio IP based on profile (e.g. LAN, WiFi)
-    - View logs
+    x View logs
+    x Save absolute file path in logs
     - Log filters (action, date, from, to, file regexp)
 v0.1.2 - Feature Updates 
     x Commit: 2026-01-16 16:35

@@ -2,6 +2,7 @@
 package dali
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,6 +28,7 @@ const (
 	findCmd    string = "find"
 	sendCmd    string = "send"
 	updateCmd  string = "update"
+	logsCmd    string = "logs"
 )
 
 var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
@@ -37,19 +39,21 @@ var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
 	openCmd:    cmdOpen,
 	sendCmd:    cmdSend,
 	updateCmd:  cmdUpdate,
+	logsCmd:    cmdLogs,
 }
 
 // List of commands, ordered for help
-var commands = []string{setCmd, openCmd, sendCmd, findCmd, updateCmd, versionCmd, HelpCmd}
+var commands = []string{setCmd, openCmd, sendCmd, findCmd, updateCmd, logsCmd, versionCmd, HelpCmd}
 
 var cmdColor = map[string]func(string) string{
-	HelpCmd:    str.Red,
-	versionCmd: str.Violet,
+	HelpCmd:    str.Yellow,
+	versionCmd: str.Red,
 	setCmd:     str.Red,
 	findCmd:    str.Cyan,
 	openCmd:    str.Yellow,
 	sendCmd:    str.Green,
 	updateCmd:  str.Blue,
+	logsCmd:    str.Violet,
 }
 
 var cmdText = dict.StringMap{
@@ -60,6 +64,7 @@ var cmdText = dict.StringMap{
 	openCmd:    "opens the machine to receive files and discovery",
 	sendCmd:    "send file to an open machine",
 	updateCmd:  "update dali to latest (or specific) version",
+	logsCmd:    "view activity logs",
 }
 
 var cmdOptions = map[string][][2]string{
@@ -91,6 +96,9 @@ var cmdOptions = map[string][][2]string{
 		{"", "update to latest version"},
 		{"v=0.1.0", "update to specific version"},
 		{"version=0.1.0", "update to specific version"},
+	},
+	logsCmd: {
+		{"", "view all logs"},
 	},
 }
 
@@ -162,7 +170,7 @@ func cmdHelp(_ *Node, _ dict.StringMap) error {
 		// Get command description
 		description := ""
 		if text, ok := cmdText[cmd]; ok {
-			description = fmt.Sprintf(" - %s", text)
+			description = fmt.Sprintf("- %s", text)
 		}
 
 		// Get command color
@@ -389,4 +397,29 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	peer := Peer{Name: peerName, Addr: peerAddr}
 	fmt.Printf("Sending %q to %s (%s)...\n", filePath, peerName, peerAddr)
 	return sendFile(node, peer, filePath)
+}
+
+// Logs command handler
+func cmdLogs(node *Node, options dict.StringMap) error {
+	logs := node.Logs[:]
+	slices.SortFunc(logs, func(e1, e2 Event) int {
+		// Sort by descending timestamp
+		return cmp.Compare(e2[0], e1[0])
+	})
+	fmt.Println("Logs:", len(logs))
+	fromMaxLength := slices.Max(list.Map(logs, func(e Event) int {
+		return len(e[5])
+	}))
+	toMaxLength := slices.Max(list.Map(logs, func(e Event) int {
+		return len(e[6])
+	}))
+	template := fmt.Sprintf("%%s %%s %%s from=%%-%ds to=%%-%ds %%7s %%s\n", fromMaxLength, toMaxLength)
+	for _, e := range logs {
+		timestamp, event, result, path, size, sender, receiver := e.Tuple()
+		event = str.Center(event, 8)
+		result = str.Center(result, 7)
+		size = computeFileSize(uint64(number.ParseInt(size)))
+		fmt.Printf(template, timestamp, event, result, sender, receiver, size, path)
+	}
+	return nil
 }

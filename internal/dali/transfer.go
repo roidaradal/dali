@@ -62,7 +62,11 @@ func sendFile(node *Node, peer Peer, filePath string) error {
 	}
 
 	// Create send event with empty result
-	event := Event{clock.DateTimeNow(), "send", "", filePath, size, node.Name, peer.Name}
+	absFilePath, err := filepath.Abs(filePath)
+	if err != nil {
+		return wrapErr("failed to get absolute file path", err)
+	}
+	event := Event{clock.DateTimeNow(), "send", "", absFilePath, size, node.Name, peer.Name}
 
 	// Check if responseType is 'accept'
 	switch response.Type {
@@ -178,7 +182,11 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 	}
 
 	// Create receive event with empty result
-	event := Event{clock.DateTimeNow(), "receive", "", outputPath, size, offer.Sender, node.Name}
+	absOutputPath, err := filepath.Abs(outputPath)
+	if err != nil {
+		return wrapErr("failed to get absolute file path", err)
+	}
+	event := Event{clock.DateTimeNow(), "receive", "", absOutputPath, size, offer.Sender, node.Name}
 
 	if rejected {
 		addLog(node, event, rejectType)

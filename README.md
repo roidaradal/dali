@@ -68,21 +68,17 @@ dali update v=0.1.0         # Update dali to specific version
 dali update version=0.1.0   # Update dali to specific version
 ```
 
+### View Logs 
+
+View activity logs:
+
+```bash
+dali logs       # View activity logs
+```
+
 ### Other commands 
 
 ```bash
 dali help       # Display help message
 dali version    # Display current version
 ```
-
-## TODO
-* Make GUI
-* Create background process for listening 
-* Allow viewing of shared folder in network
-* Allow fetching of file in shared folder
-* Fix: machine has multiple IPv4 addresses (WiFi, LAN)
-
-## Test Scenarios
-* 2 senders for 1 receiver, at the same time
-* Overwritten old file with same filename
-* 1 shared folder, multiple downloaders at same time
