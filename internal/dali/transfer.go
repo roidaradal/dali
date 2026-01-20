@@ -238,7 +238,7 @@ func handleIncomingTransfer(node *Node, conn net.Conn, outputDir string, autoAcc
 }
 
 func addLog(node *Node, event Event, result string) {
-	event[2] = result
+	event[evResult] = result
 	node.Config.AddLog(event)
 	node.Config.Save()
 }

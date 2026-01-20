@@ -53,12 +53,20 @@ func (c *Config) Save() error {
 	return io.SaveJSON(c, c.Path)
 }
 
+// Event indexes
+const (
+	evTimestamp int = 0
+	evType      int = 1
+	evResult    int = 2
+	evPath      int = 3
+	evSize      int = 4
+	evSender    int = 5
+	evReceiver  int = 6
+)
+
 // Destructure event parts
 func (e Event) Tuple() (timestamp, eventType, result, filePath, fileSize, senderName, receiverName string) {
-	timestamp, eventType, result = e[0], e[1], e[2]
-	filePath, fileSize = e[3], e[4]
-	senderName, receiverName = e[5], e[6]
-	return timestamp, eventType, result, filePath, fileSize, senderName, receiverName
+	return e[evTimestamp], e[evType], e[evResult], e[evPath], e[evSize], e[evSender], e[evReceiver]
 }
 
 // String representationof Node

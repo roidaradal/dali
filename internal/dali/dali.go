@@ -7,10 +7,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/roidaradal/fn/clock"
 	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
@@ -99,6 +101,11 @@ var cmdOptions = map[string][][2]string{
 	},
 	logsCmd: {
 		{"", "view all logs"},
+		{"date={DATE}", "show logs for specified date"},
+		{"action={ACTION}", "show 'send' or 'receive' logs"},
+		{"from={NAME}", "show logs where sender is {NAME}"},
+		{"to={NAME}", "show logs where receiver is {NAME}"},
+		{"file={FILENAME}", "show logs where file path contains filename substring"},
 	},
 }
 
@@ -258,7 +265,7 @@ func cmdSet(node *Node, options dict.StringMap) error {
 // Find command handler
 func cmdFind(node *Node, options dict.StringMap) error {
 	// Options: name=NAME, ip=IPAddr
-	peerName, peerAddr := anyone, anyone
+	peerName, peerAddr := anything, anything
 	for k, v := range options {
 		switch k {
 		case "name":
@@ -328,7 +335,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 // Send command handler
 func cmdSend(node *Node, options dict.StringMap) error {
 	// Options: file=FILE_PATH, to=IPADDR:PORT, for=NAME, auto=1
-	filePath, peerAddr, peerName := "", "", anyone
+	filePath, peerAddr, peerName := "", "", anything
 	autoSend := false
 	for k, v := range options {
 		switch k {
@@ -354,7 +361,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	if peerAddr == "" {
 		// Find peers if no set peer address
 		fmt.Println(findingMessage(node))
-		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anyone})
+		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anything})
 		if err != nil {
 			return wrapErr("discovery failed", err)
 		}
@@ -365,7 +372,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 		}
 
 		var peerIdx int
-		if peerName != anyone && len(peers) == 1 {
+		if peerName != anything && len(peers) == 1 {
 			peerIdx = 0
 		} else {
 			numPeers := len(peers)
@@ -401,17 +408,61 @@ func cmdSend(node *Node, options dict.StringMap) error {
 
 // Logs command handler
 func cmdLogs(node *Node, options dict.StringMap) error {
-	logs := node.Logs[:]
+	// Options: date=DATE, action=ACTION, from=NAME, to=NAME, file=FILENAME_SUBSTRING
+	filterDate, filterAction, filterFile := anything, anything, anything
+	filterFrom, filterTo := anything, anything
+	for k, v := range options {
+		if v == "" {
+			continue
+		}
+		switch k {
+		case "date":
+			filterDate = v
+		case "action":
+			filterAction = strings.ToLower(v)
+		case "from":
+			filterFrom = strings.ToLower(v)
+		case "to":
+			filterTo = strings.ToLower(v)
+		case "file":
+			filterFile = strings.ToLower(v)
+		}
+	}
+	logs := list.Filter(node.Logs, func(e Event) bool {
+		if filterDate != anything && clock.ExtractDate(e[evTimestamp]) != filterDate {
+			return false
+		}
+		if filterAction != anything && e[evType] != filterAction {
+			return false
+		}
+		if filterFrom != anything && strings.ToLower(e[evSender]) != filterFrom {
+			return false
+		}
+		if filterTo != anything && strings.ToLower(e[evReceiver]) != filterTo {
+			return false
+		}
+		if filterFile == anything {
+			return true
+		}
+		pattern := regexp.MustCompile("(?i)" + filterFile)
+		return pattern.MatchString(e[evPath])
+	})
+	numLogs := len(logs)
+	fmt.Println("Logs:", numLogs)
+	if numLogs == 0 {
+		fmt.Println("No logs found")
+		return nil
+	}
+
 	slices.SortFunc(logs, func(e1, e2 Event) int {
 		// Sort by descending timestamp
-		return cmp.Compare(e2[0], e1[0])
+		return cmp.Compare(e2[evTimestamp], e1[evTimestamp])
 	})
-	fmt.Println("Logs:", len(logs))
 	fromMaxLength := slices.Max(list.Map(logs, func(e Event) int {
-		return len(e[5])
+		return len(e[evSender])
 	}))
 	toMaxLength := slices.Max(list.Map(logs, func(e Event) int {
-		return len(e[6])
+		return len(e[evReceiver])
 	}))
 	template := fmt.Sprintf("%%s %%s %%s from=%%-%ds to=%%-%ds %%7s %%s\n", fromMaxLength, toMaxLength)
 	for _, e := range logs {

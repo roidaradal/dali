@@ -16,7 +16,7 @@ import (
 )
 
 // Wildcard default for names and ip addresses
-const anyone string = "*"
+const anything string = "*"
 
 // Remove spaces from name
 func compressName(name string) string {

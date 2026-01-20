@@ -1,7 +1,4 @@
 TODO
-- Finish early in detection if search param found
-- Check if can prio IP based on profile (e.g. LAN, WiFi)
-    - Fix: what if machine has multiple IPv4 address
 - Make GUI 
     - Create background process for listening
     - Allow viewing of shared folder in network 
@@ -20,7 +17,10 @@ v0.1.3 - Event Logging
     x Send auto option (autosend if 1)
     x View logs
     x Save absolute file path in logs
-    - Log filters (action, date, from, to, file regexp)
+    x Log filters (action, date, from, to, file regexp)
+    - Finish early in detection if search param found
+    - Check if can prio IP based on profile (e.g. LAN, WiFi)
+        - Fix: what if machine has multiple IPv4 address
 v0.1.2 - Feature Updates 
     x Commit: 2026-01-16 16:35
     x Set defaultTimeout to 3s

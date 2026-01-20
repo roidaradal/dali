@@ -73,7 +73,12 @@ dali update version=0.1.0   # Update dali to specific version
 View activity logs:
 
 ```bash
-dali logs       # View activity logs
+dali logs                   # View activity logs
+dali logs date={DATE}       # Show logs for specified date 
+dali logs action={ACTION}   # Show 'send' or 'receive' logs 
+dali logs from={NAME}       # Show logs where sender is {NAME}
+dali logs to={NAME}         # Show logs where receiver is {NAME}
+dali logs file={FILENAME}   # Show logs where file path contains filename substring         
 ```
 
 ### Other commands 

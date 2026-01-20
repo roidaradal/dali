@@ -86,12 +86,12 @@ func discoverPeers(timeout time.Duration, filter Peer) ([]Peer, error) {
 	time.Sleep(timeout)
 	close(done)
 
-	if filter.Name != anyone || filter.Addr != anyone {
+	if filter.Name != anything || filter.Addr != anything {
 		targetName := strings.ToLower(filter.Name)
 		targetAddr := fmt.Sprintf("%s:", filter.Addr)
 		peers = list.Filter(peers, func(peer Peer) bool {
-			ok1 := filter.Name == anyone || strings.ToLower(peer.Name) == targetName
-			ok2 := filter.Addr == anyone || strings.HasPrefix(peer.Addr, targetAddr)
+			ok1 := filter.Name == anything || strings.ToLower(peer.Name) == targetName
+			ok2 := filter.Addr == anything || strings.HasPrefix(peer.Addr, targetAddr)
 			return ok1 && ok2
 		})
 	}
