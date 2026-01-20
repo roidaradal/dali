@@ -15,7 +15,7 @@ func main() {
 
 	node, err := dali.LoadNode(command)
 	if err != nil {
-		log.Fatal("Failed to get dali node:", err)
+		log.Fatal("Failed to initialize: ", err)
 	}
 	fmt.Println(node)
 

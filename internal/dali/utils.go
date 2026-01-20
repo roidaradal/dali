@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/number"
@@ -67,9 +68,10 @@ func getLocalIPv4Address(soloIP bool) (string, error) {
 		return ips[0], nil
 	default:
 		// Display network choices
-		fmt.Printf("\nFound %d addresses:\n", numIPs)
+		name := getNetworkNames(ips)
+		fmt.Println("\nSelect network:")
 		for i, ip := range ips {
-			fmt.Printf("  [%d] %s\n", i+1, ip)
+			fmt.Printf("  [%d] %s %s\n", i+1, ip, name[ip])
 		}
 		// Let user select network
 		fmt.Println("\nEnter network number to use:")
@@ -79,6 +81,40 @@ func getLocalIPv4Address(soloIP bool) (string, error) {
 		}
 		return ips[choice-1], nil
 	}
+}
+
+// Get network interface names
+func getNetworkNames(ips []string) dict.StringMap {
+	name := make(dict.StringMap)
+	for _, ip := range ips {
+		name[ip] = "(?)"
+	}
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return name
+	}
+	for _, iface := range interfaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue // skip if cannot get address
+		}
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet) // type-cast into IPNet
+			if !ok {
+				continue
+			}
+			ipv4 := ipnet.IP.To4()
+			if ipv4 == nil {
+				continue
+			}
+			key := ipv4.String()
+			if _, ok := name[key]; ok {
+				name[key] = fmt.Sprintf("(%s)", iface.Name)
+				break
+			}
+		}
+	}
+	return name
 }
 
 // Create new progress bar
