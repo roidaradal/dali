@@ -11,13 +11,14 @@ import (
 )
 
 func main() {
-	node, err := dali.LoadNode()
+	command, options := getCommandArgs()
+
+	node, err := dali.LoadNode(command)
 	if err != nil {
 		log.Fatal("Failed to get dali node:", err)
 	}
 	fmt.Println(node)
 
-	command, options := getCommandArgs()
 	handler, ok := dali.CmdHandlers[command]
 	if !ok {
 		handler = dali.CmdHandlers[dali.HelpCmd]

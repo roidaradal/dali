@@ -58,6 +58,17 @@ var cmdColor = map[string]func(string) string{
 	logsCmd:    str.Violet,
 }
 
+var cmdSoloIP = map[string]bool{
+	HelpCmd:    false,
+	versionCmd: false,
+	setCmd:     false,
+	updateCmd:  false,
+	logsCmd:    false,
+	findCmd:    true,
+	openCmd:    true,
+	sendCmd:    true,
+}
+
 var cmdText = dict.StringMap{
 	HelpCmd:    "display help message",
 	versionCmd: "display current version",
@@ -110,7 +121,7 @@ var cmdOptions = map[string][][2]string{
 }
 
 // Load user node
-func LoadNode() (*Node, error) {
+func LoadNode(command string) (*Node, error) {
 	// Get home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -157,8 +168,8 @@ func LoadNode() (*Node, error) {
 	}
 
 	// Get local IP address
-	addr, err := getLocalIPv4Address()
-	if err != nil {
+	addr, err := getLocalIPv4Address(cmdSoloIP[command])
+	if err != nil || addr == "" {
 		return nil, wrapErr("failed to get local IP addr", err)
 	}
 
@@ -317,7 +328,11 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 			overwrite = true
 		}
 	}
-	fmt.Printf("Output folder: %s\n", outputDir)
+	absOutputDir, err := filepath.Abs(outputDir)
+	if err != nil {
+		return wrapErr("failed to get absolute path of output dir", err)
+	}
+	fmt.Printf("Output folder: %s\n", absOutputDir)
 	fmt.Printf("Listening for requests on local network at port %d...\n", listenPort)
 
 	// Run discovery listener in the background
@@ -325,7 +340,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 		runDiscoveryListener(node.Name, listenPort)
 	}()
 
-	err := receiveFiles(node, listenPort, outputDir, autoAccept, overwrite)
+	err = receiveFiles(node, listenPort, outputDir, autoAccept, overwrite)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -388,9 +403,8 @@ func cmdSend(node *Node, options dict.StringMap) error {
 					fmt.Printf(template, i+1, peer.Name, peer.Addr)
 				}
 
-				fmt.Println("\nEnter peer number to send to:")
-				input := readInput()
-				choice := number.ParseInt(input)
+				fmt.Printf("\nEnter peer number to send to: ")
+				choice := number.ParseInt(readInput())
 				if choice < 1 || choice > numPeers {
 					return fmt.Errorf("invalid selection")
 				}

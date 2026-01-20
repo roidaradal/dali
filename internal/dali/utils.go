@@ -12,6 +12,7 @@ import (
 
 	"github.com/roidaradal/fn/io"
 	"github.com/roidaradal/fn/list"
+	"github.com/roidaradal/fn/number"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -36,24 +37,48 @@ func wrapErr(message string, err error) error {
 }
 
 // Get local IPv4 address
-func getLocalIPv4Address() (string, error) {
+func getLocalIPv4Address(soloIP bool) (string, error) {
 	host, err := os.Hostname()
 	if err != nil {
-		return "", err
+		return "", wrapErr("failed to get hostname", err)
 	}
 
 	addrs, err := net.LookupIP(host)
 	if err != nil {
-		return "", err
+		return "", wrapErr("failed to get host IP addresses", err)
 	}
 
+	ips := make([]string, 0)
 	for _, addr := range addrs {
 		if ipv4 := addr.To4(); ipv4 != nil && !ipv4.IsLoopback() {
-			return ipv4.String(), nil
+			ips = append(ips, ipv4.String())
 		}
 	}
 
-	return "", nil
+	if !soloIP {
+		return strings.Join(ips, ", "), nil
+	}
+
+	numIPs := len(ips)
+	switch numIPs {
+	case 0:
+		return "", nil
+	case 1:
+		return ips[0], nil
+	default:
+		// Display network choices
+		fmt.Printf("\nFound %d addresses:\n", numIPs)
+		for i, ip := range ips {
+			fmt.Printf("  [%d] %s\n", i+1, ip)
+		}
+		// Let user select network
+		fmt.Println("\nEnter network number to use:")
+		choice := number.ParseInt(readInput())
+		if choice < 1 || choice > numIPs {
+			return "", fmt.Errorf("invalid selection")
+		}
+		return ips[choice-1], nil
+	}
 }
 
 // Create new progress bar
