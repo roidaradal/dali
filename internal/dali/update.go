@@ -6,7 +6,7 @@ var updateNotes = map[string][]string{
 	"0.1.4": {
 		"`reset` command",
 		"`update` notes",
-		"Fix for multiple network interfaces",
+		"Fix discovery on multiple network interfaces (WLAN, Ethernet)",
 	},
 	"0.1.3": {
 		"Add logs for sending / receiving",

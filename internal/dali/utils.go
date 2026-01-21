@@ -37,6 +37,13 @@ func wrapErr(message string, err error) error {
 	return fmt.Errorf("%s: %w", message, err)
 }
 
+// Create new IPv4 addres from ip string
+func newIPv4(addr string) net.IP {
+	parts := list.Map(strings.Split(addr, "."), number.ParseInt)
+	a, b, c, d := byte(parts[0]), byte(parts[1]), byte(parts[2]), byte(parts[3])
+	return net.IPv4(a, b, c, d)
+}
+
 // Get local IPv4 address
 func getLocalIPv4Address(soloIP bool) (string, error) {
 	host, err := os.Hostname()

@@ -17,10 +17,11 @@ type Peer struct {
 }
 
 // DiscoverPeers broadcasts a query and collects peer responses
-func discoverPeers(timeout time.Duration, filter Peer, endASAP bool) ([]Peer, error) {
-	// Create UDP socket for sending, address at 0.0.0.0:0 (port 0 = auto-select open port)
+func discoverPeers(nodeAddr string, timeout time.Duration, filter Peer, endASAP bool) ([]Peer, error) {
+	// Create UDP socket for sending, port 0 = auto-select open port
+	// Used to be 0.0.0.0 address, but changed to chosen nodeAddr (for multiple IPs)
 	addr := &net.UDPAddr{
-		IP:   net.IPv4zero,
+		IP:   newIPv4(nodeAddr), // old value: net.IPv4zero
 		Port: 0,
 	}
 	conn, err := net.ListenUDP("udp4", addr)
@@ -100,10 +101,11 @@ mainLoop:
 }
 
 // RunDiscoveryListener listens for discovery queries and responds with announcements
-func runDiscoveryListener(name, ipAddr string, transferPort uint16) error {
+func runDiscoveryListener(node *Node, transferPort uint16) error {
 	// Create UDP socket for listening, address at 0.0.0.0:<DISCOVERY_PORT>
+	// Used to be 0.0.0.0, but replaced with selected nodeAddr
 	addr := &net.UDPAddr{
-		IP:   net.IPv4zero,
+		IP:   newIPv4(node.Addr), // old value: net.IPv4zero
 		Port: discoveryPort,
 	}
 	conn, err := net.ListenUDP("udp4", addr)
@@ -125,8 +127,8 @@ func runDiscoveryListener(name, ipAddr string, transferPort uint16) error {
 		}
 
 		// Respond with our announcement
-		name = compressName(name)
-		announce := newAnnounceMessage(name, ipAddr, transferPort)
+		name := compressName(node.Name)
+		announce := newAnnounceMessage(name, node.Addr, transferPort)
 		conn.WriteToUDP(announce.ToBytes(), peerAddr)
 	}
 }

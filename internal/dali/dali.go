@@ -319,7 +319,7 @@ func cmdFind(node *Node, options dict.StringMap) error {
 	}
 
 	fmt.Println(findingMessage(node))
-	peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: peerAddr}, endASAP)
+	peers, err := discoverPeers(node.Addr, time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: peerAddr}, endASAP)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func cmdFind(node *Node, options dict.StringMap) error {
 
 	fmt.Printf("Found %d peers:\n", len(peers))
 	maxLength := maxPeerNameLength(peers)
-	template := fmt.Sprintf("  • %%%ds : %%s\n", maxLength)
+	template := fmt.Sprintf("  • %%-%ds : %%s\n", maxLength)
 	for _, peer := range peers {
 		fmt.Printf(template, peer.Name, peer.Addr)
 	}
@@ -368,7 +368,7 @@ func cmdOpen(node *Node, options dict.StringMap) error {
 
 	// Run discovery listener in the background
 	go func() {
-		runDiscoveryListener(node.Name, node.Addr, listenPort)
+		runDiscoveryListener(node, listenPort)
 	}()
 
 	err = receiveFiles(node, listenPort, outputDir, autoAccept, overwrite)
@@ -410,7 +410,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 	if peerAddr == "" {
 		// Find peers if no set peer address
 		fmt.Println(findingMessage(node))
-		peers, err := discoverPeers(time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anything}, endASAP)
+		peers, err := discoverPeers(node.Addr, time.Duration(node.Timeout)*time.Second, Peer{Name: peerName, Addr: anything}, endASAP)
 		if err != nil {
 			return wrapErr("discovery failed", err)
 		}
@@ -432,7 +432,7 @@ func cmdSend(node *Node, options dict.StringMap) error {
 				// Let user select recipient
 				fmt.Printf("\nFound %d peers:\n", numPeers)
 				maxLength := maxPeerNameLength(peers)
-				template := fmt.Sprintf("  [%%2d] %%%ds : %%s\n", maxLength)
+				template := fmt.Sprintf("  [%%2d] %%-%ds : %%s\n", maxLength)
 				for i, peer := range peers {
 					fmt.Printf(template, i+1, peer.Name, peer.Addr)
 				}
