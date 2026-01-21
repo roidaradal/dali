@@ -15,12 +15,13 @@ import (
 	"github.com/roidaradal/fn/clock"
 	"github.com/roidaradal/fn/dict"
 	"github.com/roidaradal/fn/io"
+	"github.com/roidaradal/fn/lang"
 	"github.com/roidaradal/fn/list"
 	"github.com/roidaradal/fn/number"
 	"github.com/roidaradal/fn/str"
 )
 
-const currentVersion string = "0.1.3"
+const currentVersion string = "0.1.4"
 
 const (
 	HelpCmd    string = "help"
@@ -31,6 +32,7 @@ const (
 	sendCmd    string = "send"
 	updateCmd  string = "update"
 	logsCmd    string = "logs"
+	resetCmd   string = "reset"
 )
 
 var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
@@ -42,20 +44,22 @@ var CmdHandlers = map[string]func(*Node, dict.StringMap) error{
 	sendCmd:    cmdSend,
 	updateCmd:  cmdUpdate,
 	logsCmd:    cmdLogs,
+	resetCmd:   cmdReset,
 }
 
 // List of commands, ordered for help
-var commands = []string{setCmd, openCmd, sendCmd, findCmd, updateCmd, logsCmd, versionCmd, HelpCmd}
+var commands = []string{setCmd, openCmd, sendCmd, findCmd, updateCmd, logsCmd, resetCmd, versionCmd, HelpCmd}
 
 var cmdColor = map[string]func(string) string{
-	HelpCmd:    str.Yellow,
-	versionCmd: str.Red,
+	HelpCmd:    str.Green,
+	versionCmd: str.Yellow,
 	setCmd:     str.Red,
 	findCmd:    str.Cyan,
 	openCmd:    str.Yellow,
 	sendCmd:    str.Green,
 	updateCmd:  str.Blue,
 	logsCmd:    str.Violet,
+	resetCmd:   str.Red,
 }
 
 var cmdSoloIP = map[string]bool{
@@ -64,6 +68,7 @@ var cmdSoloIP = map[string]bool{
 	setCmd:     false,
 	updateCmd:  false,
 	logsCmd:    false,
+	resetCmd:   false,
 	findCmd:    true,
 	openCmd:    true,
 	sendCmd:    true,
@@ -78,6 +83,7 @@ var cmdText = dict.StringMap{
 	sendCmd:    "send file to an open machine",
 	updateCmd:  "update dali to latest (or specific) version",
 	logsCmd:    "view activity logs",
+	resetCmd:   "erase name, timeout, logs",
 }
 
 var cmdOptions = map[string][][2]string{
@@ -495,4 +501,11 @@ func cmdLogs(node *Node, options dict.StringMap) error {
 		fmt.Printf(template, timestamp, event, result, sender, receiver, size, path)
 	}
 	return nil
+}
+
+// Reset command handler
+func cmdReset(node *Node, _ dict.StringMap) error {
+	err := os.Remove(node.Config.Path)
+	fmt.Println("dali reset", lang.Ternary(err == nil, "successful", "failed"))
+	return err
 }

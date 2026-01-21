@@ -86,6 +86,7 @@ dali logs file={FILENAME}   # Show logs where file path contains filename substr
 ### Other commands 
 
 ```bash
+dali reset      # Reset the dali profile (erase name, timeout, logs)
 dali help       # Display help message
 dali version    # Display current version
 ```
