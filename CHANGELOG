@@ -10,7 +10,7 @@ TODO
 v0.1.4 - Multiple Networks 
     - Commit: 
     x Reset command 
-    - Update notes
+    x Update notes
     - Fix network IP in discoverPeers, if multiple network interface
         - Check discoverPeers and runDiscovery, replace ipZero with chosen ip?
 v0.1.3 - Event Logging 

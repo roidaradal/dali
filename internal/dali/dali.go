@@ -21,8 +21,6 @@ import (
 	"github.com/roidaradal/fn/str"
 )
 
-const currentVersion string = "0.1.4"
-
 const (
 	HelpCmd    string = "help"
 	openCmd    string = "open"
@@ -117,6 +115,7 @@ var cmdOptions = map[string][][2]string{
 		{"", "update to latest version"},
 		{"v=0.1.0", "update to specific version"},
 		{"version=0.1.0", "update to specific version"},
+		{"notes", "view last 3 versions' update notes"},
 	},
 	logsCmd: {
 		{"", "view all logs"},
@@ -238,24 +237,45 @@ func cmdVersion(_ *Node, _ dict.StringMap) error {
 // Update command handler
 func cmdUpdate(_ *Node, options dict.StringMap) error {
 	version := "latest"
+	doUpdate := true
 	for k, v := range options {
 		switch k {
 		case "v", "version":
 			version = v
+		case "notes":
+			doUpdate = false
 		}
 	}
-	cmd1, cmd2 := "go", "install"
-	cmd3 := fmt.Sprintf("github.com/roidaradal/dali@%s", version)
 
-	fmt.Printf("Running: %s %s %s ... ", cmd1, cmd2, cmd3)
-	cmd := exec.Command("cmd", "/c", cmd1, cmd2, cmd3)
-	cmd.Stdout = os.Stdout
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("FAIL")
-		return err
+	if doUpdate {
+		cmd1, cmd2 := "go", "install"
+		cmd3 := fmt.Sprintf("github.com/roidaradal/dali@%s", version)
+
+		fmt.Printf("Running: %s %s %s ... ", cmd1, cmd2, cmd3)
+		cmd := exec.Command("cmd", "/c", cmd1, cmd2, cmd3)
+		cmd.Stdout = os.Stdout
+		err := cmd.Run()
+		if err != nil {
+			fmt.Println("FAIL")
+			return err
+		}
+		fmt.Println("OK")
+		return nil
 	}
-	fmt.Println("OK")
+
+	fmt.Printf("\n%s\n\n", str.Green("UPDATE NOTES:"))
+
+	// Display update notes
+	keys := dict.Keys(updateNotes)
+	slices.Sort(keys)
+	slices.Reverse(keys)
+	keys = keys[:3]
+	for _, version := range keys {
+		fmt.Println(str.Cyan("v" + version))
+		for _, notes := range updateNotes[version] {
+			fmt.Printf("  • %s\n", notes)
+		}
+	}
 	return nil
 }
 

@@ -62,12 +62,13 @@ dali send file={FILE_PATH} wait             # Wait for timeout to finish finding
 
 ### Update 
 
-Update dali to latest (or specific) version:
+Update dali to latest (or specific) version, or view update notes:
 
 ```bash
 dali update                 # Update dali to latest version
 dali update v=0.1.0         # Update dali to specific version
 dali update version=0.1.0   # Update dali to specific version
+dali update notes           # View last 3 versions' update notes
 ```
 
 ### View Logs 
