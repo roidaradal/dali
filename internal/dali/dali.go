@@ -5,7 +5,6 @@ import (
 	"cmp"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -248,19 +247,8 @@ func cmdUpdate(_ *Node, options dict.StringMap) error {
 	}
 
 	if doUpdate {
-		cmd1, cmd2 := "go", "install"
-		cmd3 := fmt.Sprintf("github.com/roidaradal/dali@%s", version)
-
-		fmt.Printf("Running: %s %s %s ... ", cmd1, cmd2, cmd3)
-		cmd := exec.Command("cmd", "/c", cmd1, cmd2, cmd3)
-		cmd.Stdout = os.Stdout
-		err := cmd.Run()
-		if err != nil {
-			fmt.Println("FAIL")
-			return err
-		}
-		fmt.Println("OK")
-		return nil
+		path := fmt.Sprintf("github.com/roidaradal/dali@%s", version)
+		return io.RunGoInstall(path)
 	}
 
 	fmt.Printf("\n%s\n\n", str.Green("UPDATE NOTES:"))

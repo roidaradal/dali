@@ -3,7 +3,7 @@ module github.com/roidaradal/dali
 go 1.25.0
 
 require (
-	github.com/roidaradal/fn v0.5.48
+	github.com/roidaradal/fn v0.5.52
 	github.com/schollz/progressbar/v3 v3.19.0
 )
 
