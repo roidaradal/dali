@@ -241,6 +241,9 @@ func cmdUpdate(_ *Node, options dict.StringMap) error {
 		switch k {
 		case "v", "version":
 			version = v
+			if !strings.HasPrefix(version, "v") {
+				version = "v" + version
+			}
 		case "notes":
 			doUpdate = false
 		}
